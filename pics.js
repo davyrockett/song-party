@@ -26,12 +26,6 @@ var PICS = {
   // Body and actions
   clap: '1f44f', hooray: '1f64c', wave_hand: '1f44b', stomp: '1f9b6', foot: '1f9b6', leg: '1f9b5', hand: '270b',
   thumbs: '1f44d', arm: '1f4aa', eyes: '1f440', ear: '1f442', nose: '1f443', mouth: '1f444', dance: '1f483',
-  // More for the ARC songs (added 2026-10-19)
-  blowfish: '1f421', dolphin: '1f42c', lobster: '1f99e', oyster: '1f9aa', tiger: '1f42f', racehorse: '1f40e', bird: '1f426',
-  paw: '1f43e', planet: '1fa90', earth: '1f30d', 'shooting star': '1f320', cloud: '2601', snowflake: '2744', ice: '1f9ca',
-  palm: '1f334', cactus: '1f335', rose: '1f339', mountain: '26f0', beach: '1f3d6', lemon: '1f34b', honey: '1f36f',
-  lollipop: '1f36d', anchor: '2693', ship: '1f6a2', cowboy: '1f920', maracas: '1fa87', trumpet: '1f3ba', saxophone: '1f3b7',
-  violin: '1f3bb', microphone: '1f3a4', handshake: '1f91d', hug: '1fac2', friends: '1f9d1-200d-1f91d-200d-1f9d1',
   // Feelings
   happy: '1f60a', smile: '1f603', sad: '1f622', angry: '1f620', sleepy: '1f634', surprised: '1f62e', silly: '1f61c',
 };

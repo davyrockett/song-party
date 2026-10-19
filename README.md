@@ -14,11 +14,6 @@ synth sound effects (pops, a plop, a cheer). No voices.
   **←** / **Page Up** goes back; **Esc** back to the songs. After the last verse: confetti and a cheer.
 - **Magic words:** a highlighted word like *cow* has a picture. Click the word (or press **1**–**9**) and the picture pops
   up big in the middle of the screen, then lands next to the word. Settings → Magic words can make them pop up by themselves instead.
-- **Big pictures and scenes:** many songs show big pictures beside the verse (clapping hands, a sleeping lion…).
-  Click one and it wiggles with a sound; click the sleeping lion and it wakes up and roars. Each song can have a scene:
-  fish swimming along the bottom, twinkling stars, a galloping horse… In Edit songs, put `{clap}` on its own line in a
-  verse to add a big picture (`{lion zzz}` for a sleeping one), and pick a Scene from the list.
-- Songs open with two sections per screen; **Aa Bigger** shows one at a time.
 - **C** switches colors anytime (light, dark, yellow on blue).
 
 ## Hole in the Bottom of the Sea

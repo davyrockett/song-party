@@ -17,7 +17,7 @@
 <script src="suite.js" defer></script>
 <script src="share.js" defer></script>
 <script>
-  window.APP_VERSION = 'v5';
+  window.APP_VERSION = 'v6';
   // Apply the saved colours before anything draws, so the screen never flashes the wrong colours.
   (function () {
     var t = 'light';
@@ -88,10 +88,9 @@
 
 <!-- Lyrics: one section at a time, David presses to move on -->
 <section id="lyrics" class="screen" hidden>
-  <div class="scene" id="scene" aria-hidden="true"></div>
   <div class="step" id="step">
     <p class="step-head"><img class="step-pic" id="step-pic" alt=""><span id="step-head"></span></p>
-    <div class="step-stage" id="step-stage"><div class="vp-col" id="vp-left"></div><div class="step-page" id="step-page"></div><div class="vp-col" id="vp-right"></div></div>
+    <div class="step-stage" id="step-stage"><div class="step-page" id="step-page"></div></div>
     <p class="step-next" id="step-next"></p>
   </div>
   <div class="pop-layer" id="pop-layer" aria-hidden="true"></div>
@@ -181,16 +180,13 @@
         <fieldset class="ed-cats"><legend>Groups</legend><div id="f-cats"></div>
           <div class="row"><input id="f-newcat" placeholder="New group name"><button type="button" class="btn" id="f-addcat">Add group</button></div>
         </fieldset>
-        <label class="narrow-label">Scene <span class="cap">(moving pictures around the edges while the song is up)</span>
-          <select id="f-scene"></select></label>
         <label>Get ready! <span class="cap">(one per line, shown before the song: what to do, e.g. “Stand up if you can!”)</span>
           <textarea id="f-how" rows="3"></textarea></label>
         <p class="cap ed-activity" id="f-activity" hidden>This song is a built-in activity (the group picks what goes in
           the hole), so it has no lyrics to edit here.</p>
         <label id="f-lyrics-label">Lyrics <span class="cap">(a blank line between verses; [Chorus] on its own line at the top of a
           chorus. Magic words: [frog](frog) shows the word “frog” and pops up the frog picture. The part in round
-          brackets is a picture name from the list. Big pictures beside a verse: put {clap} or {clap, stomp} on its own line in
-          that verse; {lion zzz} makes it a sleeping lion. Click a big picture while singing and it wiggles.)</span>
+          brackets is a picture name from the list.)</span>
           <textarea id="f-lyrics" rows="18" class="mono"></textarea></label>
         <p class="cap" id="f-slides-note" hidden>This song has its own slide layout (made with ✎ Edit while singing). Changes to the
           lyrics here won't show until you use “Reset to automatic” in the slide editor.</p>

@@ -95,33 +95,6 @@ var Sfx = (function () {
         sweep('sine', 420, 640, t, 0.09, 0.18);
         sweep('sine', 640, 420, t + 0.1, 0.09, 0.16);
         break;
-      case 'clap':     // two hand claps
-        [0, 0.22].forEach(function (d) { hiss(t + d, 1400, 'bandpass', 1.2, 0.5, 0.09); hiss(t + d + 0.012, 2600, 'bandpass', 2, 0.25, 0.06); });
-        break;
-      case 'stomp':    // two heavy footsteps
-        [0, 0.3].forEach(function (d) { sweep('sine', 120, 40, t + d, 0.22, 0.6); hiss(t + d, 300, 'lowpass', 1, 0.25, 0.12); });
-        break;
-      case 'roar':     // a big friendly growl: low rumble rising and falling, with breath noise
-        (function () {
-          var o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-          o.type = 'sawtooth';
-          o.frequency.setValueAtTime(70, t); o.frequency.linearRampToValueAtTime(110, t + 0.35); o.frequency.linearRampToValueAtTime(60, t + 1.1);
-          f.type = 'lowpass'; f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(900, t + 0.35); f.frequency.linearRampToValueAtTime(250, t + 1.1);
-          g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.15);
-          o.connect(f); f.connect(g); g.connect(out); o.start(t); o.stop(t + 1.2);
-          hiss(t, 700, 'bandpass', 0.8, 0.22, 1.0);
-        })();
-        break;
-      case 'whoosh':
-        hiss(t, 900, 'bandpass', 1, 0.3, 0.6);
-        sweep('sine', 200, 900, t, 0.5, 0.08);
-        break;
-      case 'shaker':
-        for (i = 0; i < 4; i++) hiss(t + i * 0.11, 6500, 'highpass', 0.7, i % 2 ? 0.12 : 0.2, 0.07);
-        break;
-      case 'boing':
-        sweep('sine', 160, 700, t, 0.3, 0.28);
-        break;
       case 'twinkle':
         [86, 91, 88, 93].forEach(function (m, j) { bell(m, t + j * 0.09, 0.8); });
         break;

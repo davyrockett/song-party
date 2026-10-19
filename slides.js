@@ -9,16 +9,11 @@
 
 var sl = { song: null, slides: [], i: 0, history: [], saveTimer: 0, dragFrom: -1, back: 0 };
 
-// The automatic layout as slide texts: two sections per slide, the way Song Party opens every song.
-// Verse pictures ({clap} lines) are kept with their section.
-function pageText(p) {
-  var head = (p.chorus ? '[Chorus]\n' : '') + ((p.pics || []).length || (p.fx || []).length ? '{' + (p.pics || []).concat(p.fx || []).join(', ') + '}\n' : '');
-  return head + p.lines.join('\n');
-}
+// The automatic layout as slide texts: one section per slide, the way Song Party opens every song.
 function autoSlides(song) {
-  var pages = songPages(Object.assign({}, song, { slides: null })), out = [];
-  for (var i = 0; i < pages.length; i += 2) out.push(pages.slice(i, i + 2).map(pageText).join('\n\n'));
-  return out;
+  return songPages(Object.assign({}, song, { slides: null })).map(function (p) {
+    return (p.chorus ? '[Chorus]\n' : '') + p.lines.join('\n');
+  });
 }
 
 function openSlideEditor(song, atScreen) {
@@ -26,9 +21,9 @@ function openSlideEditor(song, atScreen) {
   var own = customSlides(song);
   sl.song = song;
   sl.slides = own ? own.slice() : autoSlides(song);
-  // Start on the slide that was showing. (With the automatic layout in "Bigger", one screen = half a slide.)
+  // Start on the slide that was showing. (With the automatic layout, each slide is one section.)
   var i = atScreen || 0;
-  if (!own && perScreen() === 1 && st.screens[i]) i = Math.floor(st.screens[i][0] / 2);
+  if (!own && st.screens[i]) i = st.screens[i][0];
   sl.i = Math.max(0, Math.min(sl.slides.length - 1, i));
   sl.history = [];
   $('sl-title').textContent = song.title;
@@ -88,7 +83,6 @@ function renderMirror() {
     var d = el('div');
     if (!line.trim()) { inChorus = false; d.textContent = '​'; }
     else if (/^\s*\[chorus\]\s*$/i.test(line)) { inChorus = true; d.appendChild(el('span', 'tag', '♪ Chorus')); }
-    else if (PICLINE.test(line.trim())) d.appendChild(el('span', 'tag', 'Pictures: ' + line.trim().slice(1, -1)));
     else { d.textContent = line; if (inChorus) d.className = 'chorus'; }
     m.appendChild(d);
   });
