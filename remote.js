@@ -42,7 +42,7 @@ function screenState() {
             size: document.documentElement.getAttribute('data-size'), per: perScreen() };
   if (current === 'list') { s.group = group; s.seed = shuffleSeed; }
   if (current === 'card' && card.song) { s.song = card.song.id; s.ci = card.i; }
-  if (current === 'lyrics' && ly.song) { s.song = ly.song.id; s.i = st.i; s.u = ly.song.updatedAt || ''; s.fx = st.fired.slice(); }
+  if (current === 'lyrics' && ly.song) { s.song = ly.song.id; s.i = st.i; s.u = ly.song.updatedAt || ''; s.fx = st.fired.slice(); s.vp = st.vp; }
   if (current === 'hole' && hs.song) { s.song = hs.song.id; s.hole = holeState(); }
   if (current === 'party' && party.song) { s.song = party.song.id; s.chain = party.chain; s.pt = party.t; }
   return s;
@@ -80,6 +80,8 @@ function applyState(s) {
       if (to !== prev || perChanged) { st.i = to; renderStep(to > prev ? 1 : to < prev ? -1 : 0); }
       // Magic pictures the other device popped up (by a click or a number key).
       (s.fx || []).forEach(function (k) { if (st.fired.indexOf(k) < 0) fire(k, true); });
+      // A big verse picture the other device clicked: wiggle it here too.
+      if (s.vp && s.vp.n > st.vp.n) { st.vp = s.vp; poke(s.vp.k, true); }
     } else if (s.screen === 'hole' && song && s.hole) {
       holeApply(s.hole, song);
     } else if (s.screen === 'party' && song) {

@@ -311,7 +311,11 @@ function cardKeys(e) {
 /* ---------- Words, one section at a time ----------
    David presses a key (or a foot pedal / clicker that acts like one) to go on. */
 var ly = { song: null, wake: null };
-// Text as verses: [{ chorus: true/false, lines: [...] }]. A blank line starts a new verse; a "[Chorus]" line marks one.
+// Text as verses: [{ chorus, lines: [...], pics: [...], fx: [...] }]. A blank line starts a new verse; a "[Chorus]"
+// line marks one. A line like {clap} or {clap, stomp} shows those pictures big beside the words while that verse is up;
+// add zzz to make one asleep ({lion zzz, palm}: click the lion and it wakes up and roars).
+var PICLINE = /^\{([^}]*)\}$/;
+var EFFECTS = ['zzz'];
 function textBlocks(text) {
   var out = [];
   String(text || '').replace(/\r/g, '').split(/\n\s*\n/).forEach(function (block) {
@@ -319,7 +323,17 @@ function textBlocks(text) {
     if (!ls.length) return;
     var chorus = /^\[chorus\]$/i.test(ls[0]);
     if (chorus) ls = ls.slice(1);
-    if (ls.length) out.push({ chorus: chorus, lines: ls });
+    var pics = [], fx = [];
+    ls = ls.filter(function (l) {
+      var m = PICLINE.exec(l);
+      if (!m) return true;
+      m[1].split(',').forEach(function (n) {
+        n = n.trim().toLowerCase();
+        if (n) (EFFECTS.indexOf(n) >= 0 ? fx : pics).push(n);
+      });
+      return false;
+    });
+    if (ls.length) out.push({ chorus: chorus, lines: ls, pics: pics, fx: fx });
   });
   return out;
 }
@@ -333,17 +347,17 @@ function songBlocks(song) {
   return out;
 }
 
-/* Long verses are split into even pages of up to 5 lines, so the words stay huge.
-   The Size button switches to two sections per screen (pages 1+2, 3+4, …) for smaller text and fewer presses. */
-var st = { pages: [], screens: [], i: 0, custom: null, fired: [], timers: [] };
+/* Long verses are split into even pages of up to 5 lines. Songs open with two sections per screen (pages 1+2,
+   3+4, …: smaller words, fewer presses; David's default); the Size button switches to one section per screen. */
+var st = { pages: [], screens: [], i: 0, custom: null, fired: [], timers: [], vp: { n: 0, k: -1 } };
 var STEP_SIZE = { smaller: 5.4, normal: 6.6, bigger: 8 };   // starting text size (vw); shrinks to fit
 function narrow() { return window.innerWidth < 800; }
-function perScreen() { return lsGet(K.per) === '2' ? 2 : 1; }   // one section per screen unless Smaller was pressed
+function perScreen() { return lsGet(K.per) === '1' ? 1 : 2; }   // two sections per screen unless Bigger was pressed
 function songPages(song) {
   var pages = [];
   songBlocks(song).forEach(function (b) {
     var n = b.lines.length, parts = Math.ceil(n / 5), per = Math.ceil(n / parts);
-    for (var i = 0; i < n; i += per) pages.push({ chorus: b.chorus, lines: b.lines.slice(i, i + per) });
+    for (var i = 0; i < n; i += per) pages.push({ chorus: b.chorus, lines: b.lines.slice(i, i + per), pics: b.pics, fx: b.fx });
   });
   return pages.length ? pages : [{ chorus: false, lines: ['(No words for this song yet)'] }];
 }
@@ -356,8 +370,8 @@ function buildScreens() {
   st.screens = out;
 }
 function openStep(song) {
-  lsSet(K.per, '1');   // every song starts with one section per screen: big words for this group
-  st = { pages: songPages(song), screens: [], i: 0, custom: null, fired: [], timers: [] };
+  lsSet(K.per, '2');   // every song starts with two sections per screen (smaller words; David, 2026-10-19)
+  st = { pages: songPages(song), screens: [], i: 0, custom: null, fired: [], timers: [], vp: { n: 0, k: -1 } };
   var sl = customSlides(song);
   if (sl) {
     st.pages = []; st.custom = [];
@@ -370,6 +384,7 @@ function openStep(song) {
   }
   buildScreens();
   setPic($('step-pic'), song.pic);
+  renderScene(song.scene);
   show('lyrics');
   keepAwake(true);
   $('lyrics-badge').hidden = true;
@@ -423,6 +438,90 @@ function lineEl(text, counter) {
   if (last < text.length) p.appendChild(document.createTextNode(text.slice(last)));
   return p;
 }
+/* Verse pictures: the {clap} pictures of the sections on screen, big, beside the words (left, then right, so the
+   words stay in the middle). Click one and it wiggles with its sound (a sleeping animal wakes up). */
+var PIC_SOUNDS = { clap: 'clap', stomp: 'stomp', foot: 'stomp', leg: 'stomp', hooray: 'cheer', party: 'cheer', lion: 'roar',
+  tiger: 'roar', bear: 'roar', dog: 'boing', drum: 'stomp', star: 'twinkle', sparkles: 'twinkle', moon: 'twinkle',
+  sun: 'twinkle', rainbow: 'twinkle', rocket: 'whoosh', heart: 'twinkle', maracas: 'shaker' };
+function renderVersePics(screen) {
+  var names = [], fx = [];
+  screen.forEach(function (pi) {
+    var p = st.pages[pi];
+    (p.pics || []).forEach(function (n) { if (names.indexOf(n) < 0) names.push(n); });
+    (p.fx || []).forEach(function (n) { if (fx.indexOf(n) < 0) fx.push(n); });
+  });
+  names = names.slice(0, 4);
+  var left = $('vp-left'), right = $('vp-right');
+  left.textContent = ''; right.textContent = '';
+  $('step-stage').classList.toggle('with-pics', names.length > 0);
+  var perSide = Math.ceil(names.length / 2);
+  left.className = right.className = 'vp-col' + (perSide > 1 ? ' two' : '');
+  names.forEach(function (n, k) {
+    var v = el('span', 'vpic');
+    v.dataset.k = k;
+    v.dataset.pic = n;
+    v.style.animationDelay = (-k * 0.7) + 's';
+    var sleepy = / zzz$/.test(n);   // {lion zzz} = this picture asleep; {zzz} on its own = all of them
+    n = n.replace(/ zzz$/, '');
+    v.dataset.pic = n;
+    v.appendChild(picEl(n));
+    if (sleepy || fx.indexOf('zzz') >= 0) {
+      v.classList.add('asleep');
+      var z = el('span', 'zzz');
+      z.appendChild(el('span', null, 'z')); z.appendChild(el('span', null, 'z')); z.appendChild(el('span', null, 'Z'));
+      v.appendChild(z);
+    }
+    (names.length === 1 || k % 2 === 0 ? left : right).appendChild(v);
+  });
+}
+function poke(k, fromLink) {
+  var v = $('step-stage').querySelector('.vpic[data-k="' + k + '"]');
+  if (!v) return;
+  v.classList.remove('poke');
+  void v.offsetWidth;
+  v.classList.add('poke');
+  if (v.classList.contains('asleep')) {   // a sleeping animal wakes up for a moment
+    v.classList.add('awake');
+    clearTimeout(v.wakeTimer);
+    v.wakeTimer = setTimeout(function () { v.classList.remove('awake'); }, 3000);
+  }
+  Sfx.play(PIC_SOUNDS[v.dataset.pic] || 'wiggle');
+  if (!fromLink) { st.vp = { n: st.vp.n + 1, k: k }; if (typeof stateChanged === 'function') stateChanged(); }
+}
+['vp-left', 'vp-right'].forEach(function (id) {
+  $(id).addEventListener('click', function (e) {
+    var v = e.target.closest ? e.target.closest('.vpic') : null;
+    if (!v) return;
+    e.stopPropagation();
+    poke(Number(v.dataset.k));
+  });
+});
+
+/* Scenes: gentle moving pictures around the edges of the screen while a song is up (fish swimming by, stars
+   twinkling…). A song's scene is chosen in Edit songs. Pictures stay in the corners and along the bottom,
+   away from the words. [picture, kind of movement and place] */
+var SCENES = {
+  sea: [['tropical fish', 'swim s1'], ['fish', 'swim s2'], ['blowfish', 'swim s3'], ['shell', 'tl'], ['dolphin', 'br bob'], ['octopus', 'tr bob']],
+  space: [['moon', 'tr bob'], ['planet', 'tl bob'], ['rocket', 'fly'], ['star', 'tw t1'], ['star', 'tw t2'], ['star', 'tw t3'],
+    ['star', 'tw t4'], ['sparkles', 'tw t5'], ['star', 'tw t6']],
+  jungle: [['leaf', 'hang tl'], ['leaf', 'hang tr'], ['palm', 'bl'], ['monkey', 'br bob'], ['butterfly', 'flutter']],
+  sunny: [['sun', 'tr spin'], ['cloud', 'drift d1'], ['cloud', 'drift d2'], ['flower', 'bl bob'], ['flower', 'br bob']],
+  rainbow: [['rainbow', 'tl bob'], ['rainbow', 'tr bob'], ['cloud', 'drift d1'], ['bird', 'flap f1'], ['star', 'tw t6']],
+  west: [['cactus', 'bl'], ['cactus', 'br'], ['racehorse', 'gallop'], ['sun', 'tr spin'], ['cowboy', 'tl bob']],
+  fiesta: [['maracas', 'tl shake'], ['maracas', 'tr shake'], ['guitar', 'bl bob'], ['dance', 'br bob'], ['party', 'tw t3']],
+  hearts: [['heart', 'rise r1'], ['heart', 'rise r2'], ['heart', 'rise r3'], ['heart', 'rise r4'], ['handshake', 'bl bob'], ['hug', 'br bob']],
+  farm: [['house', 'bl'], ['tree', 'br'], ['cow', 'walk w1'], ['pig', 'walk w2'], ['chicken', 'walk w3'], ['sun', 'tr spin']],
+  party: [['balloon', 'tl bob'], ['balloon', 'tr bob'], ['party', 'bl'], ['confetti', 'br'], ['sparkles', 'tw t2'], ['sparkles', 'tw t5']],
+};
+var SCENE_NAMES = { '': 'None', sea: 'Under the sea', space: 'Space', jungle: 'Jungle', sunny: 'Sunny day', rainbow: 'Rainbow',
+  west: 'Wild West', fiesta: 'Fiesta', hearts: 'Hearts', farm: 'Farm', party: 'Party' };
+function renderScene(name) {
+  var box = $('scene');
+  box.textContent = '';
+  box.className = 'scene' + (SCENES[name] ? ' scene-' + name : '');
+  (SCENES[name] || []).forEach(function (it) { box.appendChild(picEl(it[0], 'sc ' + it[1])); });
+}
+
 function renderStep(dir) {
   var n = st.screens.length, screen = st.screens[st.i];
   var page = $('step-page');
@@ -437,6 +536,7 @@ function renderStep(dir) {
     p.lines.forEach(function (l) { block.appendChild(lineEl(l, counter)); });
     page.appendChild(block);
   });
+  renderVersePics(screen);
   fitStep();
   if (dir) { void page.offsetWidth; page.classList.add(dir > 0 ? 'in-fwd' : 'in-back'); }
   $('step-head').textContent = ly.song.title + '  ·  ' + (st.i + 1) + ' of ' + n;
@@ -704,6 +804,7 @@ function edPick(id) {
   $('f-pic').value = s.pic || '';
   setPic($('f-pic-show'), s.pic);
   $('f-how').value = (s.how || []).join('\n');
+  $('f-scene').value = s.scene || '';
   $('f-lyrics').value = s.lyrics || '';
   $('f-activity').hidden = !s.activity;
   $('f-lyrics-label').hidden = !!s.activity;
@@ -741,6 +842,7 @@ function edSaveNow() {
     pic: $('f-pic').value.trim().toLowerCase(),
     cats: cats,
     how: lines($('f-how').value),
+    scene: $('f-scene').value,
     lyrics: $('f-lyrics').value.replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim(),
   });
   var same = JSON.stringify(Object.assign({}, rec, { updatedAt: 0 })) === JSON.stringify(Object.assign({}, old, { updatedAt: 0 }));
@@ -748,6 +850,11 @@ function edSaveNow() {
   $('f-saved').textContent = sync.isOn() ? 'Saved' : 'Saved on this device only';
   if (rec.title !== old.title || rec.pic !== old.pic) renderEdList();
 }
+(function () {
+  var sel = $('f-scene');
+  Object.keys(SCENE_NAMES).forEach(function (k) { var o = el('option', null, SCENE_NAMES[k]); o.value = k; sel.appendChild(o); });
+  sel.addEventListener('change', edChanged);
+})();
 ['f-title', 'f-pic', 'f-how', 'f-lyrics'].forEach(function (id) {
   $(id).addEventListener('input', edChanged);
   $(id).addEventListener('blur', edSaveNow);

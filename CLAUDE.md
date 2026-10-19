@@ -81,7 +81,7 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   Settings → Sound effects On/Off. With the TV link only the TV plays sounds (the remote is silent).
 - **Flow:** welcome → picture tiles → "Get ready!" card (`how` lines, N = next) → words or activity → party screen
   (confetti, cheer, "Sing it again" / Next song). No questions screen (Memory Lane's "Let's talk" was dropped).
-  No autoscroll mode. Songs open **one section per screen** (big words); "Aa Smaller" switches to two.
+  No autoscroll mode. Songs open **two sections per screen** (smaller words, fewer presses; David 2026-10-19: "Always default to smaller text"); "Aa Bigger" switches to one.
 - **Magic words:** `[word](pic)` in lyrics. The picture's space is saved next to the word from the start (no shifting);
   on firing it grows big in the middle of the screen, then flies into its place (CSS transitions, `fire()` in app.js).
   Settings → Magic words: **wait for a click on the word / number keys 1–9 (default since v2, David's request:
@@ -110,3 +110,12 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   only other copies are a scanned guitar tab and a Wikifonia lead sheet with verse 1 only. Waiting for a text copy.
   No interactive bits on these songs yet (David: "we don't need interactive stuff for every song yet").
   Groups: Action, Silly, Animal, Dance, Movie, Feel-Good, Calm, Pick & Build (colours in `GROUP_COLORS`).
+- **Verse pictures and scenes (v5, 2026-10-19, David: "start adding in some interactive and/or visual things to the
+  newer songs"):** a line `{clap}` / `{clap, stomp}` in a verse shows those pictures big beside the words while it's
+  up (left column, then right, so the words stay centred; up to 4). `{lion zzz}` = asleep with floating z's; clicking
+  wakes it (shake + roar). Clicking any verse picture wiggles it with a sound (`PIC_SOUNDS`: clap, stomp, cheer,
+  roar, twinkle…); clicks travel over the TV link (`vp` in the state). A song's `scene` (Edit songs → Scene;
+  `SCENES` in app.js: sea, space, jungle, sunny, rainbow, west, fiesta, hearts, farm, party) adds gently moving
+  pictures in the corners and along the top/bottom strips, away from the words, plus a faint colour wash (light theme).
+  `tools/add-visuals.py` gave the 11 ARC songs + Old MacDonald their scene, verse pictures and a few magic words
+  (wrapping existing words, never retyping). Extra pictures added to pics.js for these.
