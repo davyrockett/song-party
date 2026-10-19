@@ -12,9 +12,8 @@ synth sound effects (pops, a plop, a cheer). No voices.
 - **Get ready! card:** the song's picture, title and what to do. **N** shows the next tip, **Enter** starts.
 - **Words:** one verse at a time, huge. **Space**, **→**, **Page Down** or **Enter** goes on (a foot pedal or clicker works);
   **←** / **Page Up** goes back; **Esc** back to the songs. After the last verse: confetti and a cheer.
-- **Magic words:** a highlighted word like *cow* has a picture. It pops up big in the middle of the screen, then lands
-  next to the word. By default the pictures pop up by themselves a moment after the verse appears; Settings → Magic words
-  can make them wait for a click (or number keys **1**–**9**).
+- **Magic words:** a highlighted word like *cow* has a picture. Click the word (or press **1**–**9**) and the picture pops
+  up big in the middle of the screen, then lands next to the word. Settings → Magic words can make them pop up by themselves instead.
 - **C** switches colors anytime (light, dark, yellow on blue).
 
 ## Hole in the Bottom of the Sea

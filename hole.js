@@ -84,15 +84,17 @@ function renderVerse(dir) {
   var rowsBox = $('hole-rows');
   rowsBox.textContent = '';
   $('hole-head').textContent = hs.song.title + '  ·  Verse ' + (n + 1);
-  var banner = $('hole-banner');
-  banner.textContent = '';
-  banner.className = 'hole-banner' + (hs.part === 1 ? ' strong' : '');
+  // The small line above the words: a reminder on the first screen, empty (but keeping its space) on the second.
+  $('hole-banner').textContent = hs.part === 0 ? 'Sing it two times!' : '';
   var newest = n ? holeItem(words[0]) : { word: 'hole', pic: 'hole' };
-  if (hs.part === 0) banner.textContent = 'Sing it two times!';
-  else {
-    var said = 'There’s ' + article(newest.word) + ' ' + newest.word;
-    banner.appendChild(holePicEl(newest.pic, 'bpic'));
-    banner.appendChild(document.createTextNode(' ' + said + ', ' + said.charAt(0).toLowerCase() + said.slice(1) + '!'));
+  // Second screen: "There's a duck, there's a duck!" first, as big as the rest, then the long line again.
+  if (hs.part === 1) {
+    var a = article(newest.word);
+    var lead = holeRow(newest.pic, 'There’s ' + a + ' ', newest.word, ', there’s ' + a + ' ');
+    lead.querySelector('.htext').appendChild(el('b', null, newest.word));
+    lead.querySelector('.htext').appendChild(document.createTextNode('!'));
+    lead.classList.add('lead');
+    rowsBox.appendChild(lead);
   }
   if (!n) rowsBox.appendChild(holeRow('hole', 'There’s a ', 'hole', ''));
   words.forEach(function (w, i) {

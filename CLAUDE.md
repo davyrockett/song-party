@@ -80,10 +80,11 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   No autoscroll mode. Songs open **one section per screen** (big words); "Aa Smaller" switches to two.
 - **Magic words:** `[word](pic)` in lyrics. The picture's space is saved next to the word from the start (no shifting);
   on firing it grows big in the middle of the screen, then flies into its place (CSS transitions, `fire()` in app.js).
-  Settings → Magic words: pop up by themselves (default, 0.9 s after the verse, 1.3 s apart; David's hands are on the
-  guitar) or wait for a click / number keys 1–9. Fired pictures travel over the TV link (`fx` in the state).
+  Settings → Magic words: **wait for a click on the word / number keys 1–9 (default since v2, David's request:
+  "the emoji animals don't appear until the word is clicked")** or pop up by themselves (0.9 s after the verse, 1.3 s apart). Fired pictures travel over the TV link (`fx` in the state).
 - **Hole in the Bottom of the Sea** (`hole.js`, song record `activity: 'hole'`, no lyrics): verse 1 = the hole; each verse
-  is two screens (long line "sing it two times", then "There's a X, there's a X!" + long line). The words are rows
+  is two screens (long line, with a small "Sing it two times!" above; then "There's a X, there's a X!" + the long line).
+  The "There's a X, there's a X!" line is a row as big as the rest (v2, David: so it's obvious what to sing), not a banner. The words are rows
   top-down, newest thing first, each with its picture, ending "in the hole / in the bottom of the sea!" (so the rows
   look like the pile). Board: 24 things (`HOLE_ITEMS`), used ones greyed out; Space = Surprise! spin (lights up random
   pictures, slows, lands; synced over the link: the device that spun does the choosing); "Old song" = classic chain

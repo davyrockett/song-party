@@ -247,8 +247,8 @@ input:focus, textarea:focus { outline: 3px solid var(--focus); outline-offset: 1
 .hole-banner { position: absolute; top: 7.5vh; left: 3vw; right: 3vw; margin: 0; text-align: center; height: 7vh;
   display: flex; align-items: center; justify-content: center; gap: .3em;
   font-size: 3.2vw; font-weight: 600; color: rgba(255,255,255,.85); text-shadow: 0 .08em 0 rgba(0,0,0,.2); white-space: nowrap; }
-.hole-banner.strong { color: #FFE45C; font-weight: 700; font-size: 3.8vw; }
-.hole-banner .bpic { width: 1.25em; height: 1.25em; }
+/* "There's a duck, there's a duck!": same size as the lines under it, with a little gap before the long line. */
+.hrow.lead { margin-bottom: .35em; }
 .hole-stage { position: absolute; top: 16vh; bottom: 13vh; left: 4vw; right: 4vw; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .hole-rows { display: flex; flex-direction: column; align-items: flex-start; font-weight: 600; line-height: 1.12; }
 .hole-rows.in-fwd { animation: stepFwd .35s ease-out; }
@@ -272,7 +272,7 @@ input:focus, textarea:focus { outline: 3px solid var(--focus); outline-offset: 1
 /* The hole: a dark oval with a sandy rim. */
 .hole-pic { display: inline-block; width: 100%; height: 55%; border-radius: 50%; background: #F4D58D; padding: .07em; }
 .hole-pic span { display: block; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(ellipse at 50% 70%, #0A1630 40%, #24344F 100%); }
-.pick-q .hole-pic, .hole-banner .hole-pic { width: 1.25em; height: .7em; }
+.pick-q .hole-pic { width: 1.25em; height: .7em; }
 /* The picture board */
 .hole-pick { display: flex; flex-direction: column; align-items: center; padding: 3vh 4vw 11vh; }
 .pick-q { font-size: 4.2vw; display: flex; align-items: center; gap: .4em; text-shadow: 0 .06em 0 rgba(0,0,0,.25); margin-bottom: 2vh; }
@@ -481,7 +481,7 @@ body.tv .ctrl.quiet { opacity: 0; }
   .step-next { font-size: 16px; }
   .ctrl { font-size: 13px; gap: 2px; padding: 4px; }
   .cb { padding: .35em .5em; }
-  .hole-banner { font-size: 18px; } .hole-banner.strong { font-size: 20px; }
+  .hole-banner { font-size: 18px; }
   .pick-q { font-size: 24px; }
   .pick-grid { grid-template-columns: repeat(3, 1fr); }
   .party-title { font-size: 36px; } .party-sub { font-size: 20px; }

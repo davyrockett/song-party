@@ -450,7 +450,7 @@ function renderStep(dir) {
   $('c-size').textContent = perScreen() === 2 ? 'Aa Bigger' : 'Aa Smaller';
   $('c-size').title = st.custom ? (perScreen() === 2 ? 'Bigger words' : 'Smaller words')
     : perScreen() === 2 ? 'One section per screen, bigger words' : 'Two sections per screen, smaller words';
-  // Magic pictures pop up one after another by themselves (Settings), a moment after the words appear.
+  // Magic pictures wait for a click on the word (or a number key), unless Settings says to pop them up by themselves.
   if (magicAuto() && counter.n) {
     for (var k = 0; k < counter.n; k++) {
       (function (k) { st.timers.push(setTimeout(function () { fire(k); }, 900 + k * 1300)); })(k);
@@ -459,7 +459,7 @@ function renderStep(dir) {
 }
 
 /* Magic words: the picture grows big in the middle of the screen, then flies into its place by the word. */
-function magicAuto() { return (lsGet(K.magic) || 'auto') === 'auto'; }
+function magicAuto() { return lsGet(K.magic) === 'auto'; }   // default: wait for a click (David, 2026-10-19)
 function clearMagic() {
   st.timers.forEach(clearTimeout);
   st.timers = [];
@@ -981,7 +981,7 @@ function applyTheme(t) {
   if (m) m.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
   markSettings();
 }
-var SEGS = [['theme', K.theme, 'light'], ['size', K.size, 'normal'], ['sound', K.sound, 'on'], ['magic', K.magic, 'auto']];
+var SEGS = [['theme', K.theme, 'light'], ['size', K.size, 'normal'], ['sound', K.sound, 'on'], ['magic', K.magic, 'click']];
 function markSettings() {
   SEGS.forEach(function (s) {
     var val = lsGet(s[1]) || s[2];
