@@ -110,3 +110,8 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   only other copies are a scanned guitar tab and a Wikifonia lead sheet with verse 1 only. Waiting for a text copy.
   No interactive bits on these songs yet (David: "we don't need interactive stuff for every song yet").
   Groups: Action, Silly, Animal, Dance, Movie, Feel-Good, Calm, Pick & Build (colours in `GROUP_COLORS`).
+- **Rolled back (2026-10-19):** v5 added big verse pictures (`{clap}` lines), moving scenes, new sounds, and made songs
+  open two sections per screen. David: "please go back to before this latest change. it broke too much stuff." It was
+  reverted (app published as v6 = v4's code; songs restored to their pre-picture lyrics with fresh timestamps). The
+  old work is in commit f2e8f9d (app) and f69177c (songs) if any of it is wanted again; ask David what broke first,
+  and add things a little at a time.
