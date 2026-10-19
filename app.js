@@ -333,12 +333,12 @@ function songBlocks(song) {
   return out;
 }
 
-/* Long verses are split into even pages of up to 5 lines, so the words stay huge.
-   The Size button switches to two sections per screen (pages 1+2, 3+4, …) for smaller text and fewer presses. */
+/* Long verses are split into even pages of up to 5 lines. Songs open with two sections per screen (pages 1+2,
+   3+4, …: smaller words, fewer presses; David's default); the Size button switches to one section per screen. */
 var st = { pages: [], screens: [], i: 0, custom: null, fired: [], timers: [] };
 var STEP_SIZE = { smaller: 5.4, normal: 6.6, bigger: 8 };   // starting text size (vw); shrinks to fit
 function narrow() { return window.innerWidth < 800; }
-function perScreen() { return lsGet(K.per) === '2' ? 2 : 1; }   // one section per screen unless Smaller was pressed
+function perScreen() { return lsGet(K.per) === '1' ? 1 : 2; }   // two sections per screen unless Bigger was pressed
 function songPages(song) {
   var pages = [];
   songBlocks(song).forEach(function (b) {
@@ -356,7 +356,7 @@ function buildScreens() {
   st.screens = out;
 }
 function openStep(song) {
-  lsSet(K.per, '1');   // every song starts with one section per screen: big words for this group
+  lsSet(K.per, '2');   // every song starts with two sections per screen (smaller words; David, 2026-10-19)
   st = { pages: songPages(song), screens: [], i: 0, custom: null, fired: [], timers: [] };
   var sl = customSlides(song);
   if (sl) {

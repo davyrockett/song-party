@@ -9,11 +9,13 @@
 
 var sl = { song: null, slides: [], i: 0, history: [], saveTimer: 0, dragFrom: -1, back: 0 };
 
-// The automatic layout as slide texts: one section per slide, the way Song Party opens every song.
+// The automatic layout as slide texts: two sections per slide, the way Song Party opens every song.
 function autoSlides(song) {
-  return songPages(Object.assign({}, song, { slides: null })).map(function (p) {
-    return (p.chorus ? '[Chorus]\n' : '') + p.lines.join('\n');
-  });
+  var pages = songPages(Object.assign({}, song, { slides: null })), out = [];
+  for (var i = 0; i < pages.length; i += 2) {
+    out.push(pages.slice(i, i + 2).map(function (p) { return (p.chorus ? '[Chorus]\n' : '') + p.lines.join('\n'); }).join('\n\n'));
+  }
+  return out;
 }
 
 function openSlideEditor(song, atScreen) {
@@ -21,9 +23,9 @@ function openSlideEditor(song, atScreen) {
   var own = customSlides(song);
   sl.song = song;
   sl.slides = own ? own.slice() : autoSlides(song);
-  // Start on the slide that was showing. (With the automatic layout, each slide is one section.)
+  // Start on the slide that was showing. (With the automatic layout in "Bigger", one screen = half a slide.)
   var i = atScreen || 0;
-  if (!own && st.screens[i]) i = st.screens[i][0];
+  if (!own && perScreen() === 1 && st.screens[i]) i = Math.floor(st.screens[i][0] / 2);
   sl.i = Math.max(0, Math.min(sl.slides.length - 1, i));
   sl.history = [];
   $('sl-title').textContent = song.title;

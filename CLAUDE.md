@@ -81,7 +81,7 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   Settings → Sound effects On/Off. With the TV link only the TV plays sounds (the remote is silent).
 - **Flow:** welcome → picture tiles → "Get ready!" card (`how` lines, N = next) → words or activity → party screen
   (confetti, cheer, "Sing it again" / Next song). No questions screen (Memory Lane's "Let's talk" was dropped).
-  No autoscroll mode. Songs open **one section per screen** (big words); "Aa Smaller" switches to two.
+  No autoscroll mode. Songs open **two sections per screen** (smaller words, fewer presses; David 2026-10-19: "Always default to smaller text", re-added on its own after the v5 rollback); "Aa Bigger" switches to one.
 - **Magic words:** `[word](pic)` in lyrics. The picture's space is saved next to the word from the start (no shifting);
   on firing it grows big in the middle of the screen, then flies into its place (CSS transitions, `fire()` in app.js).
   Settings → Magic words: **wait for a click on the word / number keys 1–9 (default since v2, David's request:
