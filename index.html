@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Song Party</title>
+<meta name="description" content="Big, bright activity songs for the TV, with pictures and sound effects.">
+<meta name="theme-color" content="#FFF7E8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="move.js" data-keep="sp." data-synced="sp.data,sp.dirty"></script>
+<script src="suite.js" defer></script>
+<script>
+  window.APP_VERSION = 'v1';
+  // Apply the saved colours before anything draws, so the screen never flashes the wrong colours.
+  (function () {
+    var t = 'light';
+    try { t = localStorage.getItem('sp.theme') || 'light'; } catch (e) {}
+    if (t === 'auto') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    var z = 'normal';
+    try { z = localStorage.getItem('sp.size') || 'normal'; } catch (e) {}
+    document.documentElement.setAttribute('data-size', z);
+  })();
+</script>
+</head>
+<body>
+
+<!-- Welcome -->
+<section id="welcome" class="screen">
+  <div class="floaters" aria-hidden="true">
+    <img src="pics/1f3b6.svg" alt=""><img src="pics/1f388.svg" alt=""><img src="pics/2b50.svg" alt="">
+    <img src="pics/1f389.svg" alt=""><img src="pics/1f941.svg" alt=""><img src="pics/1f3b8.svg" alt="">
+  </div>
+  <div class="welcome-inner">
+    <p class="welcome-day" id="welcome-day"></p>
+    <p class="welcome-date" id="welcome-date"></p>
+    <p class="welcome-hello">Hello! My name is David.</p>
+    <h1 class="welcome-title" id="welcome-title">Let’s have a Song Party!</h1>
+    <div class="welcome-actions">
+      <button class="btn big primary" id="welcome-go">Pick a song ▸</button>
+      <button class="btn" id="welcome-full">Full screen</button>
+    </div>
+    <div class="welcome-link">
+      <button class="btn" id="welcome-tv">📺 Use as TV screen</button>
+      <button class="btn" id="welcome-remote">🎛 Control a TV</button>
+    </div>
+  </div>
+</section>
+
+<!-- Song list -->
+<section id="list" class="screen" hidden>
+  <header class="list-head">
+    <nav class="chips" id="chips" aria-label="Song groups"></nav>
+    <div class="list-tools">
+      <button class="icon-btn" id="list-home" title="Welcome screen (Home)" aria-label="Welcome screen">⌂</button>
+      <button class="icon-btn" id="list-colors" title="Change colors (C)" aria-label="Change colors">◐</button>
+      <button class="icon-btn" id="settings-open" title="Settings" aria-label="Settings">⚙</button>
+    </div>
+  </header>
+  <div class="grid" id="grid"></div>
+  <p class="hint" id="list-hint">Arrows move · Enter opens · Tab changes the group · Home for the welcome screen</p>
+</section>
+
+<!-- Title card -->
+<section id="card" class="screen" hidden>
+  <div class="card-inner">
+    <div class="card-pic-wrap"><img class="card-pic" id="card-pic" alt=""></div>
+    <h1 class="card-title" id="card-title"></h1>
+    <div class="card-panel" id="card-panel" aria-live="polite">
+      <p class="panel-label">Get ready!</p>
+      <p class="panel-text" id="panel-text"></p>
+      <p class="panel-count" id="panel-count"></p>
+      <button class="panel-next" id="panel-next" title="Show the next one (N)">Next ▸</button>
+    </div>
+    <div class="card-actions">
+      <button class="btn" id="card-back">◂ Songs <kbd>Esc</kbd></button>
+      <button class="btn big primary" id="card-start">Let’s sing! ▸ <kbd>Enter</kbd></button>
+    </div>
+  </div>
+</section>
+
+<!-- Lyrics: one section at a time, David presses to move on -->
+<section id="lyrics" class="screen" hidden>
+  <div class="step" id="step">
+    <p class="step-head"><img class="step-pic" id="step-pic" alt=""><span id="step-head"></span></p>
+    <div class="step-stage" id="step-stage"><div class="step-page" id="step-page"></div></div>
+    <p class="step-next" id="step-next"></p>
+  </div>
+  <div class="pop-layer" id="pop-layer" aria-hidden="true"></div>
+  <div class="lyrics-badge" id="lyrics-badge" hidden></div>
+  <div class="progress" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+  <nav class="ctrl" id="ctrl" aria-label="Song controls">
+    <button class="cb" id="c-close" title="Back to the song list (Esc)">✕ Songs</button>
+    <button class="cb" id="c-restart" title="Start the words again">⟲ Restart</button>
+    <span class="cb-group">
+      <button class="cb" id="c-back" title="Back (← or Page Up)">◂ Back</button>
+      <span class="cb-speed" id="c-page"></span>
+      <button class="cb" id="c-next" title="Next (Space, → or Page Down)">Next ▸</button>
+    </span>
+    <button class="cb" id="c-size" title="Make the words bigger or smaller">Aa Size</button>
+    <button class="cb" id="c-edit" title="Lay out this song's slides (line breaks, page breaks, repeats)">✎ Edit</button>
+    <button class="cb" id="c-colors" title="Change colors (C)">◐ Colors</button>
+    <button class="cb" id="c-done" title="Finish the song (Enter)">Finish 🎉</button>
+  </nav>
+</section>
+
+<!-- Hole in the Bottom of the Sea: the group picks what goes in the hole, one thing per verse -->
+<section id="hole" class="screen sea" hidden>
+  <div class="bubbles" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="sand" aria-hidden="true"></div>
+  <!-- A verse -->
+  <div class="hole-verse" id="hole-verse">
+    <p class="hole-head" id="hole-head"></p>
+    <p class="hole-banner" id="hole-banner"></p>
+    <div class="hole-stage" id="hole-stage"><div class="hole-rows" id="hole-rows"></div></div>
+  </div>
+  <!-- Picking the next thing -->
+  <div class="hole-pick" id="hole-pick" hidden>
+    <h2 class="pick-q" id="pick-q"></h2>
+    <div class="pick-grid" id="pick-grid"></div>
+    <div class="pick-actions">
+      <button class="btn" id="pick-back">◂ Back</button>
+      <button class="btn" id="pick-classic" title="The next thing in the old song (K)"></button>
+      <button class="btn primary" id="pick-spin" title="Let the app pick (Space)">🎲 Surprise! <kbd>Space</kbd></button>
+      <button class="btn" id="pick-finish" title="End the song (F)">🎉 Finish <kbd>F</kbd></button>
+    </div>
+  </div>
+  <nav class="ctrl" id="hole-ctrl" aria-label="Song controls">
+    <button class="cb" id="h-close" title="Back to the song list (Esc)">✕ Songs</button>
+    <button class="cb" id="h-restart" title="Empty the hole and start again">⟲ Restart</button>
+    <span class="cb-group">
+      <button class="cb" id="h-back" title="Back (← or Page Up)">◂ Back</button>
+      <span class="cb-speed" id="h-page"></span>
+      <button class="cb" id="h-next" title="Next (Space, → or Page Down)">Next ▸</button>
+    </span>
+    <button class="cb" id="h-done" title="Finish the song">Finish 🎉</button>
+  </nav>
+</section>
+
+<!-- After the song -->
+<section id="party" class="screen" hidden>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+  <div class="party-inner">
+    <h1 class="party-title" id="party-title">Yay! Great singing!</h1>
+    <p class="party-sub" id="party-sub"></p>
+    <div class="party-show" id="party-show"></div>
+    <div class="card-actions">
+      <button class="btn" id="party-again">⟲ Sing it again</button>
+      <button class="btn big primary" id="party-done">Next song ▸ <kbd>Enter</kbd></button>
+    </div>
+  </div>
+</section>
+
+<!-- Song editor -->
+<section id="editor" class="screen" hidden>
+  <header class="ed-head">
+    <h1 class="list-title">Edit songs</h1>
+    <span class="ed-sync" id="ed-sync"></span>
+    <button class="btn" id="ed-new">+ New song</button>
+    <button class="btn primary" id="ed-close">Done</button>
+  </header>
+  <div class="ed-body">
+    <ul class="ed-list" id="ed-list"></ul>
+    <form class="ed-form" id="ed-form" autocomplete="off">
+      <p class="ed-empty" id="ed-empty">Pick a song on the left, or add a new one.</p>
+      <div id="ed-fields" hidden>
+        <div class="row">
+          <label class="grow">Title <input id="f-title" required></label>
+          <label class="narrow">Picture <input id="f-pic" list="pic-names" placeholder="e.g. frog"></label>
+          <img class="f-pic-show" id="f-pic-show" alt="">
+        </div>
+        <datalist id="pic-names"></datalist>
+        <fieldset class="ed-cats"><legend>Groups</legend><div id="f-cats"></div>
+          <div class="row"><input id="f-newcat" placeholder="New group name"><button type="button" class="btn" id="f-addcat">Add group</button></div>
+        </fieldset>
+        <label>Get ready! <span class="cap">(one per line, shown before the song: what to do, e.g. “Stand up if you can!”)</span>
+          <textarea id="f-how" rows="3"></textarea></label>
+        <p class="cap ed-activity" id="f-activity" hidden>This song is a built-in activity (the group picks what goes in
+          the hole), so it has no lyrics to edit here.</p>
+        <label id="f-lyrics-label">Lyrics <span class="cap">(a blank line between verses; [Chorus] on its own line at the top of a
+          chorus. Magic words: [frog](frog) shows the word “frog” and pops up the frog picture. The part in round
+          brackets is a picture name from the list.)</span>
+          <textarea id="f-lyrics" rows="18" class="mono"></textarea></label>
+        <p class="cap" id="f-slides-note" hidden>This song has its own slide layout (made with ✎ Edit while singing). Changes to the
+          lyrics here won't show until you use “Reset to automatic” in the slide editor.</p>
+        <div class="row ed-actions">
+          <button type="button" class="btn danger" id="f-delete">Delete song</button>
+          <span class="cap" id="f-saved"></span>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Slide editor: lay out a song's screens. -->
+<section id="slides" class="screen" hidden>
+  <header class="sl-head">
+    <h1 class="list-title" id="sl-title"></h1>
+    <span class="cap" id="sl-status"></span>
+    <button class="btn" id="sl-undo" title="Undo the last slide change">↶ Undo</button>
+    <button class="btn" id="sl-reset" title="Throw away your layout and go back to the automatic slides">Reset to automatic</button>
+    <button class="btn primary" id="sl-done">Done</button>
+  </header>
+  <div class="sl-body">
+    <ol class="sl-strip" id="sl-strip"></ol>
+    <div class="sl-main">
+      <div class="sl-frame" id="sl-frame">
+        <p class="sl-count" id="sl-count"></p>
+        <div class="sl-stage" id="sl-stage">
+          <div class="sl-mirror" id="sl-mirror" aria-hidden="true"></div>
+          <textarea class="sl-text" id="sl-text" spellcheck="false" autocomplete="off" aria-label="Slide words"></textarea>
+        </div>
+        <p class="sl-next" id="sl-next"></p>
+      </div>
+      <div class="sl-tools">
+        <button class="btn" id="sl-new">＋ New slide</button>
+        <button class="btn" id="sl-repeat" title="Add a copy of this slide right after it">⧉ Repeat slide</button>
+        <button class="btn" id="sl-chorus" title="Mark or unmark the verse under the cursor as a chorus">♪ Chorus</button>
+        <button class="btn" id="sl-up">↑ Move up</button>
+        <button class="btn" id="sl-down">↓ Move down</button>
+        <button class="btn" id="sl-join" title="Pull the next slide's words onto this one">⤓ Join with next</button>
+        <button class="btn danger" id="sl-delete">Delete slide</button>
+      </div>
+      <p class="cap sl-help">Type as usual. <b>Return</b> = new line · <b>Shift+Return</b> = new slide from the cursor ·
+        <b>Backspace</b> at the very start joins this slide onto the one before · a blank line = a gap between verses ·
+        <b>Option+↑ / ↓</b> = previous / next slide · drag slides in the list to reorder.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Settings -->
+<dialog id="settings" class="sheet">
+  <h2>Settings</h2>
+  <h3>Colors <span class="cap">(press C anywhere to switch)</span></h3>
+  <div class="seg" role="group">
+    <button data-theme-v="light">Light</button>
+    <button data-theme-v="dark">Dark</button>
+    <button data-theme-v="blue">Yellow on blue</button>
+    <button data-theme-v="auto">Auto</button>
+  </div>
+  <h3>Words size</h3>
+  <div class="seg" role="group">
+    <button data-size-v="smaller">Smaller</button>
+    <button data-size-v="normal">Normal</button>
+    <button data-size-v="bigger">Bigger</button>
+  </div>
+  <h3>Sound effects</h3>
+  <div class="seg" role="group">
+    <button data-sound-v="on">On</button>
+    <button data-sound-v="off">Off</button>
+  </div>
+  <p class="cap">Pops and cheers from the TV (or this device). With the TV link, only the TV plays them.</p>
+  <h3>Magic words</h3>
+  <div class="seg" role="group">
+    <button data-magic-v="auto">Pictures pop up by themselves</button>
+    <button data-magic-v="click">Wait for a click (or number key)</button>
+  </div>
+  <h3>TV link</h3>
+  <p class="cap">Open the app on the TV and press “Use as TV screen”. Open it on your laptop, phone or iPad and press
+    “Control a TV”. Whatever you do on one shows on the other.</p>
+  <p class="cap" id="link-status"></p>
+  <div class="row">
+    <button class="btn" id="link-tv">TV screen</button>
+    <button class="btn" id="link-remote">Remote</button>
+    <button class="btn" id="link-off">Turn off</button>
+  </div>
+  <h3>Songs</h3>
+  <p><button class="btn" id="open-editor">Edit songs</button></p>
+  <div id="sync-on" hidden>
+    <p class="cap" id="sync-status"></p>
+    <p><button class="btn" id="sync-now">Sync now</button> <button class="btn" id="sync-disconnect">Turn off editing here</button></p>
+  </div>
+  <form id="sync-form">
+    <p class="cap">To save song changes for every device, paste your GitHub access key (with song-party-data, Contents read and write). Without it, this device just shows the songs.</p>
+    <div class="row"><input id="sync-token" type="password" placeholder="Access key" autocomplete="off"><button class="btn" id="sync-connect">Connect</button></div>
+    <p class="cap problem" id="sync-error" hidden></p>
+  </form>
+  <h3>App</h3>
+  <p class="cap" id="ver-line"></p>
+  <p><button class="btn" id="set-update">Check for updates</button></p>
+  <p class="cap">Pictures: <a href="https://github.com/jdecked/twemoji" target="_blank" rel="noopener">Twemoji</a>, CC-BY 4.0.</p>
+  <p><button class="btn primary" id="settings-close">Close</button></p>
+</dialog>
+
+<div class="update-banner" id="update-banner" hidden>
+  A new version is ready. <button class="btn" id="update-go">Update</button>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="link-pill" id="link-pill" hidden></div>
+
+<script src="pics.js"></script>
+<script src="app.js"></script>
+<script src="sound.js"></script>
+<script src="hole.js"></script>
+<script src="vendor/paho-mqtt.min.js"></script>
+<script src="slides.js"></script>
+<script src="remote.js"></script>
+</body>
+</html>

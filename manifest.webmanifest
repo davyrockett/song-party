@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Song Party",
+  "short_name": "Song Party",
+  "description": "Big, bright activity songs for the TV, with pictures and sound effects.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "background_color": "#FFF7E8",
+  "theme_color": "#FFF7E8",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
