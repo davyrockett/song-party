@@ -101,3 +101,12 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
 - `sw.js` loads `pics.js` and precaches every picture; adding a picture = line in `pics.js`, `tools/get-pics.sh`, bump.
 - Tested 2026-10-19 in the preview browser (TV size and phone size) and the TV link with two tabs (hole picks, spin,
   party, magic words, both directions). Not yet tried on a real smart TV.
+- **ARC Adults songs (2026-10-19):** David's lyrics folder is `~/Dropbox/Local/Resounding Joy/ARC Adults` (chord-chart
+  PDFs). `tools/import-arc.py` added 11 songs: from the charts (chord lines dropped, choruses written out in sung order,
+  small typo fixes) for Happy and You Know It, Lion Sleeps Tonight, Under the Sea, Here Comes the Sun, Happy Trails,
+  La Bamba; from Memory Lane's data for Fly Me to the Moon and Over the Rainbow (their ARC sheets are notated band
+  parts) and Hound Dog, Lean On Me, Bare Necessities (scanned sheets). It never overwrites songs already in data.json.
+  **Don't Worry Be Happy** is not in yet: the ARC PDF is scanned sheet music (OCR gives scrambled fragments) and the
+  only other copies are a scanned guitar tab and a Wikifonia lead sheet with verse 1 only. Waiting for a text copy.
+  No interactive bits on these songs yet (David: "we don't need interactive stuff for every song yet").
+  Groups: Action, Silly, Animal, Dance, Movie, Feel-Good, Calm, Pick & Build (colours in `GROUP_COLORS`).

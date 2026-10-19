@@ -138,9 +138,10 @@ var lastSongId = null;
 // Groups added later get one from the spare list.
 var GROUP_COLORS = {
   'Action Songs': '#FF7A1A', 'Silly Songs': '#E84E8A', 'Animal Songs': '#3BAA5C', 'Pick & Build': '#2E8BD8',
-  'Hello & Goodbye': '#8E5CD9', 'Calm Songs': '#2BA89A', 'Holiday Songs': '#D93B3B',
+  'Dance Songs': '#00A6C8', 'Movie Songs': '#8E5CD9', 'Feel-Good Songs': '#E8A800', 'Calm Songs': '#2BA89A',
+  'Hello & Goodbye': '#B05CC9', 'Holiday Songs': '#D93B3B',
 };
-var SPARE_COLORS = ['#F2B705', '#00A6C8', '#B05CC9', '#5C9E2E', '#E0601F'];
+var SPARE_COLORS = ['#5C9E2E', '#E0601F', '#C2477A', '#4C7FD9', '#9E7A1F'];
 function groupColor(name) {
   if (!name) return '#FF7A1A';
   if (GROUP_COLORS[name]) return GROUP_COLORS[name];
