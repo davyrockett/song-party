@@ -2,7 +2,7 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (tools/bump.sh).
 // That is how phones, iPads and TVs learn there's an update to download.
-const VERSION = 'v2';
+const VERSION = 'v3';
 const NAME = 'song-party';
 const CACHE = `${NAME}-${VERSION}`;
 const FONTS = 'song-party-fonts';
@@ -14,6 +14,7 @@ const ASSETS = [
   './index.html',
   './move.js',
   './suite.js',
+  './share.js',
   './pics.js',
   './app.js',
   './sound.js',
