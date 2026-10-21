@@ -601,10 +601,60 @@ function keepAwake(on) {
    A wrong one wiggles and fades; the right one grows and sparkles. Enter goes on to the party.
    Questions are lines in the song's quiz list, "question = right answer, wrong answer, wrong answer".
    Each answer is a picture name; "quack (duck)" shows the word "quack" with the duck picture.
-   A song with several questions asks the next one each time it's sung (N = another one now).
+   A song with several questions asks the next one each time it's sung. N = another question: the song's own
+   ones first, then bonus questions about everyday things (BONUS_QUIZ), so the group can keep going while it's fun.
    The hole song asks about what the group put in the hole. */
-var quiz = { song: null, chain: null, qs: [], qi: 0, picked: [], built: '' };
-var quizTurn = {};   // song id → which question to ask next time
+var quiz = { song: null, chain: null, qs: [], own: 0, start: 0, bonus: [], qi: 0, picked: [], built: '' };
+var quizTurn = {};    // song id → which of its questions to ask first next time
+var bonusAsked = {};  // bonus questions already shown this visit go to the back of the line
+var BONUS_QUIZ = [
+  'Which one can fly? = bird, cow, pig',
+  'Which one swims? = fish, horse, cat',
+  'Which one is a fruit? = banana, shoe, car',
+  'Which one can we eat? = pizza, rock, hat',
+  'Which one is cold? = snowman, sun, pizza',
+  'Which one shines at night? = moon, shoe, pig',
+  'Which one says woof? = dog, cat, duck',
+  'Which one says meow? = cat, dog, cow',
+  'Which one says baa? = sheep, pig, lion',
+  'Which one says roar? = lion, mouse, chick',
+  'Which one says quack? = duck, cow, horse',
+  'Which one goes on your head? = hat, shoe, banana',
+  'Which one goes on your foot? = shoe, hat, crown',
+  'Which one has wheels? = car, fish, tree',
+  'Which one goes on the water? = boat, train, house',
+  'Which one goes to space? = rocket, bus, cow',
+  'Which one plays music? = guitar, banana, shoe',
+  'Which one do we bang like this? = drum, cake, cat',
+  'Which one rings? = bell, apple, sheep',
+  'Which face is happy? = happy, sad, angry',
+  'Which face is sad? = sad, happy, silly',
+  'Which face is sleepy? = sleepy, surprised, happy',
+  'Which face is silly? = silly, sad, sleepy',
+  'Which one is for a birthday? = cake, rock, log',
+  'Which one is really big? = elephant, mouse, ant',
+  'Which one is really tiny? = ant, elephant, whale',
+  'Which one is really slow? = snail, rabbit, horse',
+  'Which one hops? = frog, snail, fish',
+  'Which one makes honey? = bee, cow, dog',
+  'Which one lays eggs? = chicken, cow, dog',
+  'Which one has a long nose? = elephant, dog, fish',
+  'Which one is yellow? = banana, apple, frog',
+  'Which one is red? = strawberry, banana, frog',
+  'Which one is orange? = carrot, frog, banana',
+  'Which one is green? = frog, pig, banana',
+  'Which one grows in a garden? = flower, car, shoe',
+  'Which one do we use in the rain? = umbrella, ball, cake',
+  'Which one do we kick? = ball, cake, teddy bear (teddy)',
+  'Which one do we hug at bedtime? = teddy bear (teddy), rock, crab',
+  'Which one does a king wear? = crown, shoe, banana',
+  'Which one is spooky? = ghost, rainbow, flower',
+  'Which one is for Halloween? = pumpkin, snowman, Christmas tree (christmas tree)',
+  'Which one is for Christmas? = Christmas tree (christmas tree), pumpkin, sun',
+  'Which one comes out after the rain? = rainbow, car, fish',
+  'Which one lives in a shell? = turtle, dog, bird',
+  'Which one has stripes? = bee, frog, pig',
+];
 function parseQuiz(line) {
   var at = line.indexOf('=');
   if (at < 0) return null;
@@ -641,11 +691,30 @@ function quizOrder(q) {
   for (i = order.length - 1; i > 0; i--) { h = (h * 7 + 3) % 9973; var j = h % (i + 1), t = order[i]; order[i] = order[j]; order[j] = t; }
   return order;
 }
-function openQuiz(song, chain, qi) {
-  var qs = quizList(song, chain);
-  if (!qs.length) { openParty(song, chain); return; }
-  if (qi == null) { qi = (quizTurn[song.id] || 0) % qs.length; quizTurn[song.id] = qi + 1; }
-  quiz = { song: song, chain: chain || null, qs: qs, qi: qi % qs.length, picked: [], built: '' };
+// Bonus questions in a mixed-up order, ones not shown yet this visit first, skipping any the song already asks.
+function bonusOrder(own) {
+  var asked = own.map(function (q) { return q.q; }), fresh = [], old = [];
+  BONUS_QUIZ.forEach(function (line, b) {
+    var q = parseQuiz(line);
+    if (q && asked.indexOf(q.q) < 0) (bonusAsked[b] ? old : fresh).push(b);
+  });
+  function mix(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  return mix(fresh).concat(mix(old));
+}
+// from: { start, bonus, qi } when copying another linked device's screen.
+function openQuiz(song, chain, from) {
+  var own = quizList(song, chain);
+  if (!own.length) { openParty(song, chain); return; }
+  var start, bonus;
+  if (from) { start = (from.start || 0) % own.length; bonus = from.bonus || []; }
+  else { start = (quizTurn[song.id] || 0) % own.length; quizTurn[song.id] = start + 1; bonus = bonusOrder(own); }
+  var qs = own.slice(start).concat(own.slice(0, start));
+  bonus.forEach(function (b) {
+    var q = BONUS_QUIZ[b] && parseQuiz(BONUS_QUIZ[b]);
+    if (q) { q.bonus = b; qs.push(q); }
+  });
+  quiz = { song: song, chain: chain || null, qs: qs, own: own.length, start: start, bonus: bonus,
+           qi: from ? Math.min(from.qi || 0, qs.length - 1) : 0, picked: [], built: '' };
   tint($('quiz'), songColor(song));
   show('quiz');
   renderQuiz();
@@ -658,6 +727,8 @@ function renderQuiz() {
   var key = quiz.song.id + '/' + quiz.qi + '/' + q.q;
   if (quiz.built !== key) {
     quiz.built = key;
+    if (q.bonus != null) bonusAsked[q.bonus] = true;
+    $('quiz-label').textContent = q.bonus != null ? 'Bonus question!' : 'Question time!';
     $('quiz-q').textContent = q.q;
     box.textContent = '';
     box.className = 'quiz-pics n' + q.a.length;
@@ -692,7 +763,7 @@ function quizPick(ai, fromLink) {
 function quizMore() {
   if (quiz.qs.length < 2) return;
   var qi = (quiz.qi + 1) % quiz.qs.length;
-  quizTurn[quiz.song.id] = qi + 1;
+  if (qi < quiz.own) quizTurn[quiz.song.id] = quiz.start + qi + 1;   // next time, start after the last one asked
   quiz.qi = qi; quiz.picked = [];
   renderQuiz();
   Sfx.play('pop');

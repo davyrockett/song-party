@@ -14,8 +14,9 @@ synth sound effects (pops, a plop, a cheer). No voices.
   **←** / **Page Up** goes back; **Esc** back to the songs. After the last verse: a picture question, then confetti and a cheer.
 - **Picture question** (after the song): "Who was sleeping?" with three big pictures. The group points or shouts;
   press **1**, **2** or **3** (or click). A wrong one wiggles and fades, the right one grows and sparkles. **N** = another
-  question, **Enter** = on to the confetti (skips the question if you'd rather not). A song with several questions asks a
-  different one each time it's sung. In the Hole song it asks what went in the hole first (or last).
+  question, as many as you like: first the song's own, then **Bonus questions** about everyday things ("Which one can
+  fly?", "Which face is sleepy?"), new ones first. **Enter** = on to the confetti (skips the question if you'd rather not).
+  A song with several questions starts with a different one each time it's sung. In the Hole song it asks what went in the hole first (or last).
 - **Magic words:** a highlighted word like *cow* has a picture. Click the word (or press **1**–**9**) and the picture pops
   up big in the middle of the screen, then lands next to the word. Settings → Magic words can make them pop up by themselves instead.
 - **C** switches colors anytime (light, dark, yellow on blue).

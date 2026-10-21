@@ -45,7 +45,7 @@ function screenState() {
   if (current === 'card' && card.song) { s.song = card.song.id; s.ci = card.i; }
   if (current === 'lyrics' && ly.song) { s.song = ly.song.id; s.i = st.i; s.u = ly.song.updatedAt || ''; s.fx = st.fired.slice(); }
   if (current === 'hole' && hs.song) { s.song = hs.song.id; s.hole = holeState(); }
-  if (current === 'quiz' && quiz.song) { s.song = quiz.song.id; s.chain = quiz.chain; s.qi = quiz.qi; s.qp = quiz.picked.slice(); }
+  if (current === 'quiz' && quiz.song) { s.song = quiz.song.id; s.chain = quiz.chain; s.qt = quiz.start; s.qb = quiz.bonus; s.qi = quiz.qi; s.qp = quiz.picked.slice(); }
   if (current === 'party' && party.song) { s.song = party.song.id; s.chain = party.chain; s.pt = party.t; }
   return s;
 }
@@ -85,7 +85,9 @@ function applyState(s) {
     } else if (s.screen === 'hole' && song && s.hole) {
       holeApply(s.hole, song);
     } else if (s.screen === 'quiz' && song) {
-      if (current !== 'quiz' || !quiz.song || quiz.song.id !== song.id) openQuiz(song, s.chain, s.qi || 0);
+      var sameQuiz = current === 'quiz' && quiz.song && quiz.song.id === song.id && quiz.start === (s.qt || 0) &&
+        String(quiz.bonus) === String(s.qb || []);
+      if (!sameQuiz) openQuiz(song, s.chain, { start: s.qt, bonus: s.qb, qi: s.qi });
       else if (quiz.qi !== (s.qi || 0)) { quiz.qi = s.qi || 0; quiz.picked = []; renderQuiz(); }
       // Answers picked on the other device (the TV plays the sounds).
       (s.qp || []).forEach(function (ai) { if (quiz.picked.indexOf(ai) < 0) quizPick(ai, true); });

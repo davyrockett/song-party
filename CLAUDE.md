@@ -87,6 +87,10 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   Each sing asks the next question in turn (`quizTurn`, in memory). Picture order comes from a hash of the question so
   linked devices match; state `qi`/`qp` over the TV link. Hole song asks what went in first/last (`holeQuiz`). A song
   without questions skips straight to the party. 12 songs got 1–3 questions each (in song-party-data).
+  **Bonus questions (v9, David: "if they are having fun with the questions I'd like to keep going"):** after the song's
+  own questions, N goes on through `BONUS_QUIZ` in app.js (46 everyday picture questions, same line format; label
+  "Bonus question!"), mixed up, ones not yet shown this visit first (`bonusAsked`). The bonus order travels over the link
+  (`qt` start, `qb` bonus order, `qi` position).
 - **Flow:** welcome → picture tiles → "Get ready!" card (`how` lines, N = next) → words or activity → picture question → party screen
   (confetti, cheer, "Sing it again" / Next song). Memory Lane's talk questions were dropped; picture questions (above) took their place.
   No autoscroll mode. Songs open **two sections per screen** (smaller words, fewer presses; David 2026-10-19: "Always default to smaller text", re-added on its own after the v5 rollback); "Aa Bigger" switches to one.
