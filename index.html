@@ -17,7 +17,7 @@
 <script src="suite.js" defer></script>
 <script src="share.js" defer></script>
 <script>
-  window.APP_VERSION = 'v7';
+  window.APP_VERSION = 'v8';
   // Apply the saved colours before anything draws, so the screen never flashes the wrong colours.
   (function () {
     var t = 'light';
@@ -144,6 +144,20 @@
   </nav>
 </section>
 
+<!-- After the song: a picture question -->
+<section id="quiz" class="screen" hidden>
+  <div class="quiz-inner">
+    <p class="panel-label">Question time!</p>
+    <h1 class="quiz-q" id="quiz-q"></h1>
+    <div class="quiz-pics" id="quiz-pics"></div>
+    <p class="quiz-yes" id="quiz-yes" aria-live="polite"></p>
+    <div class="card-actions">
+      <button class="btn" id="quiz-more">Another question <kbd>N</kbd></button>
+      <button class="btn big primary" id="quiz-done">Party! ▸ <kbd>Enter</kbd></button>
+    </div>
+  </div>
+</section>
+
 <!-- After the song -->
 <section id="party" class="screen" hidden>
   <div class="confetti" id="confetti" aria-hidden="true"></div>
@@ -182,6 +196,10 @@
         </fieldset>
         <label>Get ready! <span class="cap">(one per line, shown before the song: what to do, e.g. “Stand up if you can!”)</span>
           <textarea id="f-how" rows="3"></textarea></label>
+        <label id="f-quiz-label">After the song: picture questions <span class="cap">(one per line: the question, =, then the right
+          answer first and two wrong ones, as picture names, e.g. “Who was sleeping? = lion, cow, duck”. The pictures get
+          mixed up on screen. To show a different word, put the picture in brackets: “quack (duck)”.)</span>
+          <textarea id="f-quiz" rows="3"></textarea></label>
         <p class="cap ed-activity" id="f-activity" hidden>This song is a built-in activity (the group picks what goes in
           the hole), so it has no lyrics to edit here.</p>
         <label id="f-lyrics-label">Lyrics <span class="cap">(a blank line between verses; [Chorus] on its own line at the top of a

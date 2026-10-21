@@ -9,7 +9,8 @@
         joins late catches up at once; tells the remote whether the TV is connected.
      2. ntfy.sh, only when MQTT can't connect (it uses the normal web port, so it gets through strict
         Wi-Fi, but allows just 250 messages a day per internet connection).
-   Messages hold only which screen, song and section is showing (and, for the hole song, what's in the hole).
+   Messages hold only which screen, song and section is showing (and, for the hole song, what's in the hole;
+   for a picture question, which answers were picked).
    Loaded after app.js and hole.js and uses their globals. */
 
 var LINK_K = { role: 'sp.link-role' };
@@ -44,6 +45,7 @@ function screenState() {
   if (current === 'card' && card.song) { s.song = card.song.id; s.ci = card.i; }
   if (current === 'lyrics' && ly.song) { s.song = ly.song.id; s.i = st.i; s.u = ly.song.updatedAt || ''; s.fx = st.fired.slice(); }
   if (current === 'hole' && hs.song) { s.song = hs.song.id; s.hole = holeState(); }
+  if (current === 'quiz' && quiz.song) { s.song = quiz.song.id; s.chain = quiz.chain; s.qi = quiz.qi; s.qp = quiz.picked.slice(); }
   if (current === 'party' && party.song) { s.song = party.song.id; s.chain = party.chain; s.pt = party.t; }
   return s;
 }
@@ -82,6 +84,11 @@ function applyState(s) {
       (s.fx || []).forEach(function (k) { if (st.fired.indexOf(k) < 0) fire(k, true); });
     } else if (s.screen === 'hole' && song && s.hole) {
       holeApply(s.hole, song);
+    } else if (s.screen === 'quiz' && song) {
+      if (current !== 'quiz' || !quiz.song || quiz.song.id !== song.id) openQuiz(song, s.chain, s.qi || 0);
+      else if (quiz.qi !== (s.qi || 0)) { quiz.qi = s.qi || 0; quiz.picked = []; renderQuiz(); }
+      // Answers picked on the other device (the TV plays the sounds).
+      (s.qp || []).forEach(function (ai) { if (quiz.picked.indexOf(ai) < 0) quizPick(ai, true); });
     } else if (s.screen === 'party' && song) {
       if (current !== 'party' || !party.song || party.song.id !== song.id) openParty(song, s.chain);
       party.t = s.pt || 0;
@@ -115,7 +122,7 @@ function sendState() {
   }
 }
 // Hook into the app: whenever one of these runs, the screen changed, so tell the other devices.
-['show', 'renderPanel', 'renderStep', 'renderHole', 'renderParty', 'renderList', 'applyTheme', 'buildScreens'].forEach(function (name) {
+['show', 'renderPanel', 'renderStep', 'renderHole', 'renderQuiz', 'renderParty', 'renderList', 'applyTheme', 'buildScreens'].forEach(function (name) {
   var orig = window[name];
   window[name] = function () { var r = orig.apply(this, arguments); stateChanged(); return r; };
 });

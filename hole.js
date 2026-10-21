@@ -205,7 +205,7 @@ function holeSpin(target, fromLink) {
     if (!fromLink) holeChoose(target);
   }, t + 1100));
 }
-function holeFinish() { openParty(hs.song, hs.chain.slice()); }
+function holeFinish() { openQuiz(hs.song, hs.chain.slice()); }
 
 /* ---------- Moving through the song ---------- */
 function holeGo(d) {

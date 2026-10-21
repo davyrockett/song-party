@@ -79,8 +79,16 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
 - **Sound:** `sound.js`, synth only (no voices, ever): pop (magic word), drop (thing lands in the hole), tick/land (spin),
   wiggle, twinkle (card), cheer (party). Short and mostly unpitched so they don't clash with David's key.
   Settings → Sound effects On/Off. With the TV link only the TV plays sounds (the remote is silent).
-- **Flow:** welcome → picture tiles → "Get ready!" card (`how` lines, N = next) → words or activity → party screen
-  (confetti, cheer, "Sing it again" / Next song). No questions screen (Memory Lane's "Let's talk" was dropped).
+- **Picture questions (2026-10-21):** David wanted something after each song like Memory Lane's questions, but
+  interactive. He picked "picture question" from a list (also offered: copy-the-moves, guess-the-song, wake-up stretch
+  before; freeze dance, sing-it-a-silly-way spin, calm-down breath after). Song field `quiz`: lines
+  `question = right, wrong, wrong` (picture names; `word (pic)` for a different word). Screen `quiz` between the song and
+  the party: 1–3 pick, wrong wiggles/fades, right grows + "Yes! Lion!"; N = next question, Enter = party, Esc = list.
+  Each sing asks the next question in turn (`quizTurn`, in memory). Picture order comes from a hash of the question so
+  linked devices match; state `qi`/`qp` over the TV link. Hole song asks what went in first/last (`holeQuiz`). A song
+  without questions skips straight to the party. 12 songs got 1–3 questions each (in song-party-data).
+- **Flow:** welcome → picture tiles → "Get ready!" card (`how` lines, N = next) → words or activity → picture question → party screen
+  (confetti, cheer, "Sing it again" / Next song). Memory Lane's talk questions were dropped; picture questions (above) took their place.
   No autoscroll mode. Songs open **two sections per screen** (smaller words, fewer presses; David 2026-10-19: "Always default to smaller text", re-added on its own after the v5 rollback); "Aa Bigger" switches to one.
 - **Magic words:** `[word](pic)` in lyrics. The picture's space is saved next to the word from the start (no shifting);
   on firing it grows big in the middle of the screen, then flies into its place (CSS transitions, `fire()` in app.js).

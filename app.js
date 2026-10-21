@@ -2,11 +2,13 @@
    Started as a copy of Memory Lane Songbook; David plays guitar live while the TV shows the words.
 
    Screens: welcome → song list (picture tiles) → title card ("Get ready!") → words, one section at a time
-   (or an activity such as Hole in the Bottom of the Sea, hole.js) → party (confetti) → back to the list.
+   (or an activity such as Hole in the Bottom of the Sea, hole.js) → picture question (if the song has one)
+   → party (confetti) → back to the list.
    Plus a song editor and Settings.
 
    Songs are records in one list ("items"), each stamped with when it last changed:
      song     – title, pic (picture name from pics.js), cats (groups), how (Get ready! lines), lyrics,
+                quiz (optional picture questions after the song: "Who was sleeping? = lion, cow, duck"),
                 slides (optional layout), activity (optional: 'hole')
      settings – categories (the order of the group buttons)
    The list lives in the public repo davyrockett/song-party-data (data.json). Any device can read
@@ -93,7 +95,7 @@ function markSung(id) {
 
 /* ---------- Screens ---------- */
 var current = 'welcome';
-var SCREENS = ['welcome', 'list', 'card', 'lyrics', 'hole', 'party', 'editor', 'slides'];
+var SCREENS = ['welcome', 'list', 'card', 'lyrics', 'hole', 'quiz', 'party', 'editor', 'slides'];
 function show(name) {
   SCREENS.forEach(function (n) { $(n).hidden = n !== name; });
   if (current === 'lyrics' && name !== 'lyrics') stopLyrics();
@@ -507,7 +509,7 @@ $('step-page').addEventListener('click', function (e) {
 
 function stepGo(d) {
   var n = st.screens.length;
-  if (d > 0 && st.i >= n - 1) { openParty(ly.song); return; }
+  if (d > 0 && st.i >= n - 1) { openQuiz(ly.song); return; }
   if (d < 0 && st.i === 0) return;
   st.i += d;
   renderStep(d);
@@ -569,7 +571,7 @@ ctrl('c-back', function () { stepGo(-1); });
 ctrl('c-next', function () { stepGo(1); });
 ctrl('c-size', togglePerScreen);
 ctrl('c-colors', cycleTheme);
-ctrl('c-done', function () { openParty(ly.song); });
+ctrl('c-done', function () { openQuiz(ly.song); });
 $('list-colors').addEventListener('click', function () { this.blur(); cycleTheme(); });
 $('list-home').addEventListener('click', function () { this.blur(); openWelcome(); });
 window.addEventListener('resize', function () { if (current === 'lyrics') { clearMagic(); fitStep(); markFired(); } });
@@ -592,6 +594,122 @@ function keepAwake(on) {
   if (!('wakeLock' in navigator)) return;
   if (on && !ly.wake) navigator.wakeLock.request('screen').then(function (w) { ly.wake = w; }).catch(function () {});
   if (!on && ly.wake) { ly.wake.release().catch(function () {}); ly.wake = null; }
+}
+
+/* ---------- Picture question: after the song ----------
+   "Who was sleeping?" with three big pictures. The group points or shouts, David presses 1, 2 or 3 (or clicks).
+   A wrong one wiggles and fades; the right one grows and sparkles. Enter goes on to the party.
+   Questions are lines in the song's quiz list, "question = right answer, wrong answer, wrong answer".
+   Each answer is a picture name; "quack (duck)" shows the word "quack" with the duck picture.
+   A song with several questions asks the next one each time it's sung (N = another one now).
+   The hole song asks about what the group put in the hole. */
+var quiz = { song: null, chain: null, qs: [], qi: 0, picked: [], built: '' };
+var quizTurn = {};   // song id → which question to ask next time
+function parseQuiz(line) {
+  var at = line.indexOf('=');
+  if (at < 0) return null;
+  var answers = line.slice(at + 1).split(',').map(function (a) {
+    a = a.trim();
+    var m = a.match(/^(.*?)\s*\(([^)]+)\)$/);
+    return m ? { w: m[1].trim() || m[2].trim(), p: m[2].trim().toLowerCase() } : { w: a, p: a.toLowerCase() };
+  }).filter(function (a) { return a.w; }).slice(0, 4);
+  var q = line.slice(0, at).trim();
+  return q && answers.length >= 2 ? { q: q, a: answers } : null;
+}
+function holeQuiz(chain) {
+  if (!chain || !chain.length) return [];
+  function ask(q, right) {
+    var a = [holeItem(right)];
+    chain.concat(HOLE_ITEMS.map(function (x) { return x[0]; })).forEach(function (w) {
+      if (a.length < 3 && !a.some(function (x) { return x.word === w; })) a.push(holeItem(w));
+    });
+    return { q: q, a: a.map(function (x) { return { w: x.word, p: x.pic }; }) };
+  }
+  var out = [ask('What did we put in the hole first?', chain[0])];
+  if (chain.length > 1) out.push(ask('What did we put in last?', chain[chain.length - 1]));
+  return out;
+}
+function quizList(song, chain) {
+  if (song.activity === 'hole') return holeQuiz(chain);
+  return (song.quiz || []).map(parseQuiz).filter(Boolean);
+}
+// The pictures' mixed-up order, worked out from the question so every linked device shows the same order.
+function quizOrder(q) {
+  var h = 0, i;
+  for (i = 0; i < q.q.length; i++) h = (h * 31 + q.q.charCodeAt(i)) % 9973;
+  var order = q.a.map(function (_, j) { return j; });
+  for (i = order.length - 1; i > 0; i--) { h = (h * 7 + 3) % 9973; var j = h % (i + 1), t = order[i]; order[i] = order[j]; order[j] = t; }
+  return order;
+}
+function openQuiz(song, chain, qi) {
+  var qs = quizList(song, chain);
+  if (!qs.length) { openParty(song, chain); return; }
+  if (qi == null) { qi = (quizTurn[song.id] || 0) % qs.length; quizTurn[song.id] = qi + 1; }
+  quiz = { song: song, chain: chain || null, qs: qs, qi: qi % qs.length, picked: [], built: '' };
+  tint($('quiz'), songColor(song));
+  show('quiz');
+  renderQuiz();
+  $('quiz-done').focus();
+  Sfx.play('pop');
+}
+function quizRight() { return quiz.picked.indexOf(0) >= 0; }
+function renderQuiz() {
+  var q = quiz.qs[quiz.qi], box = $('quiz-pics');
+  var key = quiz.song.id + '/' + quiz.qi + '/' + q.q;
+  if (quiz.built !== key) {
+    quiz.built = key;
+    $('quiz-q').textContent = q.q;
+    box.textContent = '';
+    box.className = 'quiz-pics n' + q.a.length;
+    quizOrder(q).forEach(function (ai, d) {
+      var b = el('button', 'qcard');
+      b.dataset.a = ai;
+      b.appendChild(el('span', 'qcard-num', String(d + 1)));
+      b.appendChild(picEl(q.a[ai].p));
+      b.appendChild(el('span', 'qcard-word', q.a[ai].w));
+      b.addEventListener('click', function () { this.blur(); quizPick(ai); });
+      box.appendChild(b);
+    });
+  }
+  var right = quizRight();
+  Array.prototype.forEach.call(box.children, function (b) {
+    var ai = Number(b.dataset.a);
+    b.classList.toggle('yes', ai === 0 && right);
+    b.classList.toggle('no', ai !== 0 && quiz.picked.indexOf(ai) >= 0);
+    b.classList.toggle('dim', ai !== 0 && right);
+  });
+  var w = q.a[0].w;
+  $('quiz-yes').textContent = right ? 'Yes! ' + w.charAt(0).toUpperCase() + w.slice(1) + '!' : '';
+  $('quiz-more').style.visibility = quiz.qs.length > 1 ? 'visible' : 'hidden';
+}
+// ai = which answer (0 is the right one).
+function quizPick(ai, fromLink) {
+  if (quizRight() || quiz.picked.indexOf(ai) >= 0 || !quiz.qs[quiz.qi].a[ai]) return;
+  quiz.picked.push(ai);
+  Sfx.play(ai === 0 ? 'land' : 'wiggle');
+  renderQuiz();
+}
+function quizMore() {
+  if (quiz.qs.length < 2) return;
+  var qi = (quiz.qi + 1) % quiz.qs.length;
+  quizTurn[quiz.song.id] = qi + 1;
+  quiz.qi = qi; quiz.picked = [];
+  renderQuiz();
+  Sfx.play('pop');
+}
+$('quiz-more').addEventListener('click', function () { this.blur(); quizMore(); });
+$('quiz-done').addEventListener('click', function () { openParty(quiz.song, quiz.chain); });
+function quizKeys(e) {
+  if (e.repeat) { e.preventDefault(); return; }
+  var k = e.key;
+  if (/^[1-4]$/.test(k)) {
+    e.preventDefault();
+    var b = $('quiz-pics').children[Number(k) - 1];
+    if (b) quizPick(Number(b.dataset.a));
+  }
+  else if (k === 'n' || k === 'N') { e.preventDefault(); quizMore(); }
+  else if (k === 'Enter' || k === ' ' || k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown') { e.preventDefault(); openParty(quiz.song, quiz.chain); }
+  else if (k === 'Escape' || k === 'Backspace') { e.preventDefault(); openList(); }
 }
 
 /* ---------- Party: after the song ---------- */
@@ -660,6 +778,7 @@ document.addEventListener('keydown', function (e) {
   else if (current === 'card') cardKeys(e);
   else if (current === 'lyrics') lyricsKeys(e);
   else if (current === 'hole') holeKeys(e);
+  else if (current === 'quiz') quizKeys(e);
   else if (current === 'party') partyKeys(e);
 });
 
@@ -704,6 +823,8 @@ function edPick(id) {
   $('f-pic').value = s.pic || '';
   setPic($('f-pic-show'), s.pic);
   $('f-how').value = (s.how || []).join('\n');
+  $('f-quiz').value = (s.quiz || []).join('\n');
+  $('f-quiz-label').hidden = !!s.activity;
   $('f-lyrics').value = s.lyrics || '';
   $('f-activity').hidden = !s.activity;
   $('f-lyrics-label').hidden = !!s.activity;
@@ -743,12 +864,14 @@ function edSaveNow() {
     how: lines($('f-how').value),
     lyrics: $('f-lyrics').value.replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim(),
   });
+  var qz = lines($('f-quiz').value);
+  if (qz.length) rec.quiz = qz; else delete rec.quiz;
   var same = JSON.stringify(Object.assign({}, rec, { updatedAt: 0 })) === JSON.stringify(Object.assign({}, old, { updatedAt: 0 }));
   if (!same) put(edId, rec);
   $('f-saved').textContent = sync.isOn() ? 'Saved' : 'Saved on this device only';
   if (rec.title !== old.title || rec.pic !== old.pic) renderEdList();
 }
-['f-title', 'f-pic', 'f-how', 'f-lyrics'].forEach(function (id) {
+['f-title', 'f-pic', 'f-how', 'f-quiz', 'f-lyrics'].forEach(function (id) {
   $(id).addEventListener('input', edChanged);
   $(id).addEventListener('blur', edSaveNow);
 });

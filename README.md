@@ -11,7 +11,11 @@ synth sound effects (pops, a plop, a cheer). No voices.
   each time; songs sung today go to the end. **A–Z** shows them alphabetically. ⌂ (or **Home** / **Esc**) = welcome screen.
 - **Get ready! card:** the song's picture, title and what to do. **N** shows the next tip, **Enter** starts.
 - **Words:** one verse at a time, huge. **Space**, **→**, **Page Down** or **Enter** goes on (a foot pedal or clicker works);
-  **←** / **Page Up** goes back; **Esc** back to the songs. After the last verse: confetti and a cheer.
+  **←** / **Page Up** goes back; **Esc** back to the songs. After the last verse: a picture question, then confetti and a cheer.
+- **Picture question** (after the song): "Who was sleeping?" with three big pictures. The group points or shouts;
+  press **1**, **2** or **3** (or click). A wrong one wiggles and fades, the right one grows and sparkles. **N** = another
+  question, **Enter** = on to the confetti (skips the question if you'd rather not). A song with several questions asks a
+  different one each time it's sung. In the Hole song it asks what went in the hole first (or last).
 - **Magic words:** a highlighted word like *cow* has a picture. Click the word (or press **1**–**9**) and the picture pops
   up big in the middle of the screen, then lands next to the word. Settings → Magic words can make them pop up by themselves instead.
 - **C** switches colors anytime (light, dark, yellow on blue).
@@ -27,7 +31,10 @@ The group picks what goes in the hole.
 4. **Finish** (or **F**) any time: confetti, plus everything that went into the hole.
 
 ## Changing songs
-Settings (⚙ on the song list) → **Edit songs**: title, picture, groups, Get ready! tips and lyrics.
+Settings (⚙ on the song list) → **Edit songs**: title, picture, groups, Get ready! tips, picture questions and lyrics.
+- Picture questions: one per line, the question, `=`, then the right answer first and two wrong ones, as picture names:
+  `Who was sleeping? = lion, cow, duck`. They get mixed up on screen. For a different word, put the picture in brackets:
+  `Which one says quack? = quack (duck), moo (cow), oink (pig)`. A song with no questions goes straight to the confetti.
 - Leave a blank line between verses; put `[Chorus]` on its own line at the top of a chorus.
 - Magic words: `[frog](frog)` shows the word "frog" with the frog picture. The part in round brackets is a picture name;
   the Picture box suggests names as you type.
