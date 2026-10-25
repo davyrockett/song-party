@@ -17,7 +17,7 @@
 <script src="suite.js" defer></script>
 <script src="share.js" defer></script>
 <script>
-  window.APP_VERSION = 'v10';
+  window.APP_VERSION = 'v11';
   // Apply the saved colours before anything draws, so the screen never flashes the wrong colours.
   (function () {
     var t = 'light';
@@ -144,6 +144,22 @@
   </nav>
 </section>
 
+<!-- Silly words: before a song with {marked} words, the group picks a picture for each one -->
+<section id="madlib" class="screen silly" hidden>
+  <div class="ml-pick">
+    <p class="ml-head" id="ml-head"></p>
+    <p class="ml-label">Pick a silly word!</p>
+    <h2 class="ml-q" id="ml-q"></h2>
+    <div class="pick-grid" id="ml-grid"></div>
+    <div class="pick-actions">
+      <button class="btn" id="ml-close" title="Back to the song list (Esc)">✕ Songs</button>
+      <button class="btn" id="ml-back" title="Back (Backspace)">◂ Back</button>
+      <button class="btn" id="ml-real" title="Keep the song's own word (K)"></button>
+      <button class="btn primary" id="ml-spin" title="Let the app pick (Space)">🎲 Surprise! <kbd>Space</kbd></button>
+    </div>
+  </div>
+</section>
+
 <!-- After the song: a picture question -->
 <section id="quiz" class="screen" hidden>
   <div class="quiz-inner">
@@ -204,7 +220,8 @@
           the hole), so it has no lyrics to edit here.</p>
         <label id="f-lyrics-label">Lyrics <span class="cap">(a blank line between verses; [Chorus] on its own line at the top of a
           chorus. Magic words: [frog](frog) shows the word “frog” and pops up the frog picture. The part in round
-          brackets is a picture name from the list.)</span>
+          brackets is a picture name from the list. Silly words: {fire} lets the group swap the word “fire” for a
+          picture they pick before singing; every {fire} in the song gets the same pick.)</span>
           <textarea id="f-lyrics" rows="18" class="mono"></textarea></label>
         <p class="cap" id="f-slides-note" hidden>This song has its own slide layout (made with ✎ Edit while singing). Changes to the
           lyrics here won't show until you use “Reset to automatic” in the slide editor.</p>
@@ -319,6 +336,7 @@
 <script src="app.js"></script>
 <script src="sound.js"></script>
 <script src="hole.js"></script>
+<script src="madlib.js"></script>
 <script src="vendor/paho-mqtt.min.js"></script>
 <script src="slides.js"></script>
 <script src="remote.js"></script>

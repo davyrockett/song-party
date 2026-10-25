@@ -181,6 +181,13 @@ function holeSpin(target, fromLink) {
   if (!land) return;
   hs.spinning = true;
   if (!fromLink) { hs.spinN = Date.now(); hs.spinTarget = target; if (typeof stateChanged === 'function') stateChanged(); }
+  spinTiles(tiles, land, hs.timers, function () {
+    hs.spinning = false;
+    if (!fromLink) holeChoose(target);
+  });
+}
+// Lights up one picture after another, slowing down, lands on `land`, then calls done (also used by madlib.js).
+function spinTiles(tiles, land, timers, done) {
   var steps = 16, t = 0, prev = null, path = [];
   for (var i = 0; i < steps - 1; i++) {
     // A random picture each time, never the same one twice in a row (and not the winner just before it lands).
@@ -192,7 +199,7 @@ function holeSpin(target, fromLink) {
   path.push(land);
   path.forEach(function (tile, i) {
     t += 50 + i * i * 1.2;
-    hs.timers.push(setTimeout(function () {
+    timers.push(setTimeout(function () {
       if (prev) prev.classList.remove('lit');
       tile.classList.add('lit');
       prev = tile;
@@ -200,10 +207,7 @@ function holeSpin(target, fromLink) {
       else Sfx.play('tick');
     }, t));
   });
-  hs.timers.push(setTimeout(function () {
-    hs.spinning = false;
-    if (!fromLink) holeChoose(target);
-  }, t + 1100));
+  timers.push(setTimeout(done, t + 1100));
 }
 function holeFinish() { openQuiz(hs.song, hs.chain.slice()); }
 
@@ -227,9 +231,10 @@ function holeGo(d) {
   }
   renderHole(d);
 }
-function gridMove(dx, dy) {
-  var all = Array.prototype.slice.call($('pick-grid').querySelectorAll('.ptile'));
-  var i = all.indexOf(document.activeElement), cols = getComputedStyle($('pick-grid')).gridTemplateColumns.split(' ').filter(Boolean).length || 6;
+function gridMove(dx, dy, grid) {
+  grid = grid || $('pick-grid');
+  var all = Array.prototype.slice.call(grid.querySelectorAll('.ptile'));
+  var i = all.indexOf(document.activeElement), cols = getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length || 6;
   if (i < 0) i = 0;
   var j = i;
   do { j += dx + dy * cols; } while (j >= 0 && j < all.length && all[j].disabled);

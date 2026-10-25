@@ -2,13 +2,15 @@
    Started as a copy of Memory Lane Songbook; David plays guitar live while the TV shows the words.
 
    Screens: welcome → song list (picture tiles) → title card ("Get ready!") → words, one section at a time
-   (or an activity such as Hole in the Bottom of the Sea, hole.js) → picture question (if the song has one)
+   (or an activity such as Hole in the Bottom of the Sea, hole.js; a song with {silly} words starts with a
+   picture board for each one, madlib.js) → picture question (if the song has one)
    → party (confetti) → back to the list.
    Plus a song editor and Settings.
 
    Songs are records in one list ("items"), each stamped with when it last changed:
      song     – title, pic (picture name from pics.js), cats (groups), how (Get ready! lines), lyrics,
                 quiz (optional picture questions after the song: "Who was sleeping? = lion, cow, duck"),
+                lyrics may mark {words} the group swaps for pictures before singing (madlib.js),
                 slides (optional layout), activity (optional: 'hole')
      settings – categories (the order of the group buttons)
    The list lives in the public repo davyrockett/song-party-data (data.json). Any device can read
@@ -47,7 +49,8 @@ function setPic(img, name) { img.src = picUrl(name) || picUrl('notes'); }
 function uid(p) { return p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function lines(text) { return String(text || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean); }
 var MAGIC = /\[([^\]]+)\]\(([^)]+)\)/g;
-function plain(text) { return String(text || '').replace(MAGIC, '$1'); }
+var SWAP = /\{([^{}]+)\}/g;   // a word the group swaps for a picture they pick (madlib.js)
+function plain(text) { return swapText(text, ml.blanks, livePicks()); }
 var toastTimer;
 function toast(msg) {
   var t = $('toast');
@@ -95,11 +98,12 @@ function markSung(id) {
 
 /* ---------- Screens ---------- */
 var current = 'welcome';
-var SCREENS = ['welcome', 'list', 'card', 'lyrics', 'hole', 'quiz', 'party', 'editor', 'slides'];
+var SCREENS = ['welcome', 'list', 'card', 'lyrics', 'hole', 'madlib', 'quiz', 'party', 'editor', 'slides'];
 function show(name) {
   SCREENS.forEach(function (n) { $(n).hidden = n !== name; });
   if (current === 'lyrics' && name !== 'lyrics') stopLyrics();
   if (current === 'hole' && name !== 'hole' && typeof holeStop === 'function') holeStop();
+  if (current === 'madlib' && name !== 'madlib') mlStop();
   if (current === 'party' && name !== 'party') $('confetti').textContent = '';
   current = name;
   document.body.classList.remove('hide-cursor');
@@ -298,6 +302,7 @@ function cardNext() { card.i++; renderPanel(); }
 function startSong(song) {
   song = get(song.id) || song;
   if (song.activity === 'hole') holeOpen(song);
+  else if (isMadlib(song)) mlOpen(song);
   else openLyrics(song);
 }
 $('panel-next').addEventListener('click', cardNext);
@@ -409,18 +414,21 @@ function wrapped(page) {
   return Array.prototype.some.call(page.querySelectorAll('p:not(.chorus-label)'), function (p) { return p.offsetHeight > lh * 1.5; });
 }
 // One line of words. Magic words, [frog](frog), become a highlighted word with a picture that pops up.
+// Silly words, {fire}, become what the group picked (madlib.js).
+var TOKENS = /\[([^\]]+)\]\(([^)]+)\)|\{([^{}]+)\}/g;
 function lineEl(text, counter) {
   var p = el('p'), last = 0, m;
-  MAGIC.lastIndex = 0;
-  while ((m = MAGIC.exec(text))) {
+  TOKENS.lastIndex = 0;
+  while ((m = TOKENS.exec(text))) {
     if (m.index > last) p.appendChild(document.createTextNode(text.slice(last, m.index)));
+    last = TOKENS.lastIndex;
+    if (m[3] != null) { swapEl(p, m[3]); continue; }
     var w = el('span', 'magic');
     w.dataset.k = counter.n++;
     w.dataset.pic = m[2].trim();
     w.appendChild(picEl(m[2].trim(), 'mg-pic'));   // takes its space from the start, so nothing shifts when it shows
     w.appendChild(document.createTextNode(m[1]));
     p.appendChild(w);
-    last = MAGIC.lastIndex;
   }
   if (last < text.length) p.appendChild(document.createTextNode(text.slice(last)));
   return p;
@@ -509,7 +517,7 @@ $('step-page').addEventListener('click', function (e) {
 
 function stepGo(d) {
   var n = st.screens.length;
-  if (d > 0 && st.i >= n - 1) { openQuiz(ly.song); return; }
+  if (d > 0 && st.i >= n - 1) { openQuiz(ly.song, mlChain(ly.song)); return; }
   if (d < 0 && st.i === 0) return;
   st.i += d;
   renderStep(d);
@@ -571,7 +579,7 @@ ctrl('c-back', function () { stepGo(-1); });
 ctrl('c-next', function () { stepGo(1); });
 ctrl('c-size', togglePerScreen);
 ctrl('c-colors', cycleTheme);
-ctrl('c-done', function () { openQuiz(ly.song); });
+ctrl('c-done', function () { openQuiz(ly.song, mlChain(ly.song)); });
 $('list-colors').addEventListener('click', function () { this.blur(); cycleTheme(); });
 $('list-home').addEventListener('click', function () { this.blur(); openWelcome(); });
 window.addEventListener('resize', function () { if (current === 'lyrics') { clearMagic(); fitStep(); markFired(); } });
@@ -603,7 +611,7 @@ function keepAwake(on) {
    Each answer is a picture name; "quack (duck)" shows the word "quack" with the duck picture.
    A song with several questions asks the next one each time it's sung. N = another question: the song's own
    ones first, then bonus questions about everyday things (BONUS_QUIZ), so the group can keep going while it's fun.
-   The hole song asks about what the group put in the hole. */
+   The hole song asks about what the group put in the hole, a silly-words song about the words they picked. */
 var quiz = { song: null, chain: null, qs: [], own: 0, start: 0, bonus: [], qi: 0, picked: [], built: '' };
 var quizTurn = {};    // song id → which of its questions to ask first next time
 var bonusAsked = {};  // bonus questions already shown this visit go to the back of the line
@@ -681,7 +689,8 @@ function holeQuiz(chain) {
 }
 function quizList(song, chain) {
   if (song.activity === 'hole') return holeQuiz(chain);
-  return (song.quiz || []).map(parseQuiz).filter(Boolean);
+  var own = (song.quiz || []).map(parseQuiz).filter(Boolean);
+  return chain && isMadlib(song) ? mlQuiz(song, chain).concat(own) : own;
 }
 // The pictures' mixed-up order, worked out from the question so every linked device shows the same order.
 function quizOrder(q) {
@@ -799,10 +808,11 @@ function renderParty() {
   $('party-title').textContent = PARTY_TITLES[party.t || 0];
   var showBox = $('party-show');
   showBox.textContent = '';
-  if (party.chain && party.chain.length) {
-    $('party-sub').textContent = 'Look what we put in the hole!';
-    party.chain.slice().reverse().forEach(function (word) {
-      var it = holeItem(word);
+  var hole = party.song.activity === 'hole';
+  var things = !party.chain ? [] : hole ? party.chain.slice().reverse().map(holeItem) : mlShown(party.song, party.chain);
+  if (things.length) {
+    $('party-sub').textContent = hole ? 'Look what we put in the hole!' : 'Our silly words!';
+    things.forEach(function (it) {
       var c = el('span', 'party-thing');
       c.appendChild(picEl(it.pic));
       c.appendChild(el('span', null, it.word));
@@ -849,6 +859,7 @@ document.addEventListener('keydown', function (e) {
   else if (current === 'card') cardKeys(e);
   else if (current === 'lyrics') lyricsKeys(e);
   else if (current === 'hole') holeKeys(e);
+  else if (current === 'madlib') mlKeys(e);
   else if (current === 'quiz') quizKeys(e);
   else if (current === 'party') partyKeys(e);
 });

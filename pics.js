@@ -22,6 +22,7 @@ var PICS = {
   wave: '1f30a', shell: '1f41a', sun: '2600', moon: '1f319', star: '2b50', rainbow: '1f308', tree: '1f333', 'palm tree': '1f334',
   flower: '1f338', leaf: '1f33f', snowman: '26c4', pumpkin: '1f383', ghost: '1f47b', 'christmas tree': '1f384',
   // Party
+  fire: '1f525',
   party: '1f389', confetti: '1f38a', notes: '1f3b6', heart: '2764', sparkles: '2728',
   // Body and actions
   clap: '1f44f', hooray: '1f64c', wave_hand: '1f44b', stomp: '1f9b6', foot: '1f9b6', leg: '1f9b5', hand: '270b',

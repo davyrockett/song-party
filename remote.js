@@ -43,8 +43,9 @@ function screenState() {
             size: document.documentElement.getAttribute('data-size'), per: perScreen() };
   if (current === 'list') { s.group = group; s.seed = shuffleSeed; }
   if (current === 'card' && card.song) { s.song = card.song.id; s.ci = card.i; }
-  if (current === 'lyrics' && ly.song) { s.song = ly.song.id; s.i = st.i; s.u = ly.song.updatedAt || ''; s.fx = st.fired.slice(); }
+  if (current === 'lyrics' && ly.song) { s.song = ly.song.id; s.i = st.i; s.u = ly.song.updatedAt || ''; s.fx = st.fired.slice(); s.mp = mlChain(ly.song); }
   if (current === 'hole' && hs.song) { s.song = hs.song.id; s.hole = holeState(); }
+  if (current === 'madlib' && ml.song) { s.song = ml.song.id; s.ml = mlState(); }
   if (current === 'quiz' && quiz.song) { s.song = quiz.song.id; s.chain = quiz.chain; s.qt = quiz.start; s.qb = quiz.bonus; s.qi = quiz.qi; s.qp = quiz.picked.slice(); }
   if (current === 'party' && party.song) { s.song = party.song.id; s.chain = party.chain; s.pt = party.t; }
   return s;
@@ -73,17 +74,20 @@ function applyState(s) {
         sync.run().then(function () { link.refreshing = false; applyState(s); });
         return;
       }
+      var picksChanged = s.mp ? mlSet(song, s.mp) : false;   // the silly words picked on the other device
       var same = current === 'lyrics' && ly.song && ly.song.id === song.id && ly.song.updatedAt === song.updatedAt;
       if (!same) {
         openLyrics(song);   // opens with one section per screen; match the other device if it has two
         if (s.per && s.per !== perScreen()) { lsSet(K.per, String(s.per)); buildScreens(); perChanged = true; }
       } else if (perChanged) buildScreens();
       var prev = st.i, to = Math.max(0, Math.min(st.screens.length - 1, s.i || 0));
-      if (to !== prev || perChanged) { st.i = to; renderStep(to > prev ? 1 : to < prev ? -1 : 0); }
+      if (to !== prev || perChanged || picksChanged) { st.i = to; renderStep(to > prev ? 1 : to < prev ? -1 : 0); }
       // Magic pictures the other device popped up (by a click or a number key).
       (s.fx || []).forEach(function (k) { if (st.fired.indexOf(k) < 0) fire(k, true); });
     } else if (s.screen === 'hole' && song && s.hole) {
       holeApply(s.hole, song);
+    } else if (s.screen === 'madlib' && song && s.ml) {
+      mlApply(s.ml, song);
     } else if (s.screen === 'quiz' && song) {
       var sameQuiz = current === 'quiz' && quiz.song && quiz.song.id === song.id && quiz.start === (s.qt || 0) &&
         String(quiz.bonus) === String(s.qb || []);
@@ -124,7 +128,7 @@ function sendState() {
   }
 }
 // Hook into the app: whenever one of these runs, the screen changed, so tell the other devices.
-['show', 'renderPanel', 'renderStep', 'renderHole', 'renderQuiz', 'renderParty', 'renderList', 'applyTheme', 'buildScreens'].forEach(function (name) {
+['show', 'renderPanel', 'renderStep', 'renderHole', 'renderMl', 'renderQuiz', 'renderParty', 'renderList', 'applyTheme', 'buildScreens'].forEach(function (name) {
   var orig = window[name];
   window[name] = function () { var r = orig.apply(this, arguments); stateChanged(); return r; };
 });

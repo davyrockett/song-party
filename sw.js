@@ -2,7 +2,7 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (tools/bump.sh).
 // That is how phones, iPads and TVs learn there's an update to download.
-const VERSION = 'v10';
+const VERSION = 'v11';
 const NAME = 'song-party';
 const CACHE = `${NAME}-${VERSION}`;
 const FONTS = 'song-party-fonts';
@@ -19,6 +19,7 @@ const ASSETS = [
   './app.js',
   './sound.js',
   './hole.js',
+  './madlib.js',
   './remote.js',
   './slides.js',
   './vendor/paho-mqtt.min.js',

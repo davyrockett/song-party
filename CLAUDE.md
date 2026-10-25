@@ -79,6 +79,16 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
 - **Sound:** `sound.js`, synth only (no voices, ever): pop (magic word), drop (thing lands in the hole), tick/land (spin),
   wiggle, twinkle (card), cheer (party). Short and mostly unpitched so they don't clash with David's key.
   Settings → Sound effects On/Off. With the TV link only the TV plays sounds (the remote is silent).
+- **Silly words / mad libs (2026-10-25, `madlib.js`):** David asked for a mad libs activity ("and maybe Jam Session"),
+  starting with Ring of Fire (verse 1 + chorus, as he pasted). `{word}` in lyrics marks a word to swap; every `{word}` in
+  the song gets the same pick. Any song with `{…}` (and no `activity`) opens screen `madlib` after the card: one picture
+  board per marked word (`SILLY_ITEMS`, 24 foods/animals/things), the line shown with a gap and earlier picks filled in,
+  Space = Surprise spin (`spinTiles`, shared with hole.js), K = keep the real word, Backspace = undo. Then the normal
+  words screen with picks as `.swap` (picture always shown, "a"→"an" fixed, capital kept). Picture question asks about
+  the first and last pick ("Love is a burning …?"), then the song's own questions; party shows the picks. Picks travel
+  over the TV link (`ml` state on the pick screen, `mp` on the words screen; quiz/party use `chain` = picks).
+  `tools/silly-song.py` copies a song's words from Memory Lane's data and marks the swap words (never retype lyrics).
+  Jam Session version not built yet.
 - **Picture questions (2026-10-21):** David wanted something after each song like Memory Lane's questions, but
   interactive. He picked "picture question" from a list (also offered: copy-the-moves, guess-the-song, wake-up stretch
   before; freeze dance, sing-it-a-silly-way spin, calm-down breath after). Song field `quiz`: lines
