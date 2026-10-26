@@ -91,6 +91,9 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   about the first and last pick ("Love is a …?", wrong answers from the same board); party shows the picks. Picks travel
   over the TV link (`ml` state on the pick screen, `mp` on the words screen; quiz/party use `chain` = picks).
   Ring of Fire: burning = describe, thing and ring = thing, fire = things (4 picks).
+  2026-10-25 David picked six more (all via tools/silly-song.py): Raindrops Keep Falling On My Head, That’s Amore,
+  Take Me Home Country Roads, Home On The Range (from Memory Lane), and "Hound Dog (Silly Words)" / "The Lion Sleeps
+  Tonight (Silly Words)" (copies of Song Party's own, so the regular ones stay; Jam Session drops the suffix).
   `tools/silly-song.py` copies a song's words from Memory Lane's data and marks the swap words with kinds (never retype
   lyrics). Jam Session has it too (Silly Songs, `silly.js`, reading this repo's song list; same `SILLY_KINDS` copied
   there, so change both together; new pictures need copying to jam-session's `pics/` + `pics.js`).
