@@ -92,7 +92,8 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   over the TV link (`ml` state on the pick screen, `mp` on the words screen; quiz/party use `chain` = picks).
   Ring of Fire: burning = describe, thing and ring = thing, fire = things (4 picks).
   `tools/silly-song.py` copies a song's words from Memory Lane's data and marks the swap words with kinds (never retype
-  lyrics). Jam Session version not built yet.
+  lyrics). Jam Session has it too (Silly Songs, `silly.js`, reading this repo's song list; same `SILLY_KINDS` copied
+  there, so change both together; new pictures need copying to jam-session's `pics/` + `pics.js`).
 - **Picture questions (2026-10-21):** David wanted something after each song like Memory Lane's questions, but
   interactive. He picked "picture question" from a list (also offered: copy-the-moves, guess-the-song, wake-up stretch
   before; freeze dance, sing-it-a-silly-way spin, calm-down breath after). Song field `quiz`: lines

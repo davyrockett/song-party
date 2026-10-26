@@ -7,6 +7,7 @@
    words that fit. David clicks what the group chose, presses Space for a surprise pick, or K to keep the song's own
    word. The surprise comes when they sing: the words come up as usual, with the picks highlighted beside their
    pictures, and the picture question asks what the group picked.
+   Jam Session's Silly Songs (silly.js) uses these same songs and a copy of SILLY_KINDS: change both together.
    Loaded after app.js and hole.js and uses their globals. Plain old JavaScript for TV browsers. */
 
 // Each kind of word: what the screen asks for, and the board ([word sung, picture name]; up to 24, 6 across).
