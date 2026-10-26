@@ -17,7 +17,7 @@
 <script src="suite.js" defer></script>
 <script src="share.js" defer></script>
 <script>
-  window.APP_VERSION = 'v14';
+  window.APP_VERSION = 'v15';
   // Apply the saved colours before anything draws, so the screen never flashes the wrong colours.
   (function () {
     var t = 'light';
@@ -73,6 +73,7 @@
   <div class="card-inner">
     <div class="card-pic-wrap"><img class="card-pic" id="card-pic" alt=""></div>
     <h1 class="card-title" id="card-title"></h1>
+    <p class="card-tag" id="card-tag" hidden>(Silly Words)</p>
     <div class="card-panel" id="card-panel" aria-live="polite">
       <p class="panel-label">Get ready!</p>
       <p class="panel-text" id="panel-text"></p>

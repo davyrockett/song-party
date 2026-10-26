@@ -63,6 +63,8 @@ function toast(msg) {
 var items = {};
 try { items = JSON.parse(lsGet(K.data) || '{}').items || {}; } catch (e) { items = {}; }
 function get(id) { var r = items[id]; return r && !r.deleted ? Object.assign({ id: id }, r) : null; }
+// A song's name on its tile and card. Silly-words songs get "(Silly Words)" underneath instead, so it's left off here.
+function songName(song) { return String(song.title || '').replace(/\s*\(silly words\)$/i, ''); }
 function sortKey(t) { return String(t || '').replace(/^[(‘'"“]+/, '').replace(/^the /i, '').toLowerCase(); }
 function allSongs() {
   return Object.keys(items).map(get).filter(function (r) { return r && r.type === 'song'; })
@@ -227,7 +229,8 @@ function renderList() {
     var wrap = el('span', 'tile-pic-wrap');
     wrap.appendChild(picEl(song.pic, 'tile-pic'));
     t.appendChild(wrap);
-    t.appendChild(el('span', 'tile-title', song.title));
+    t.appendChild(el('span', 'tile-title', songName(song)));
+    if (isMadlib(song)) t.appendChild(el('span', 'tile-tag', '(Silly Words)'));
     // Always there (so tiles never change size); only visible for songs sung today.
     var done = el('span', 'tile-sung', '✓ Sung today');
     if (sung.indexOf(song.id) < 0) done.classList.add('off');
@@ -284,7 +287,8 @@ function openCard(id) {
   if (!song) return;
   lastSongId = id;
   card = { song: song, i: 0 };
-  $('card-title').textContent = song.title;
+  $('card-title').textContent = songName(song);
+  $('card-tag').hidden = !isMadlib(song);
   setPic($('card-pic'), song.pic);
   tint($('card'), songColor(song));
   renderPanel();

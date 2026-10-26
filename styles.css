@@ -129,6 +129,8 @@ input:focus, textarea:focus { outline: 3px solid var(--focus); outline-offset: 1
 .tile-pic-wrap { width: 11vw; height: 11vw; border-radius: 50%; background: var(--panel); display: flex; align-items: center; justify-content: center; }
 .tile-pic { width: 72%; height: 72%; }
 .tile-title { font-weight: 700; font-size: 2.3vw; line-height: 1.1; }
+.tile-tag { font-weight: 600; font-size: 1.5vw; line-height: 1.1; margin-top: -.3em; }
+.card-tag { margin: .2vh 0 0; font-weight: 600; font-size: 2.8vw; }
 .tile-sung { color: var(--soft); font-size: 1.2vw; font-weight: 600; }
 .tile-sung.off { visibility: hidden; }
 .grid .tile:focus, .grid .tile:focus-visible { outline: none; transform: translateY(-.3vw) scale(1.03); box-shadow: 0 0 0 .5vw var(--c, var(--ink)), 0 .9vw 0 var(--c, var(--line)); }
@@ -486,6 +488,7 @@ body.tv .ctrl.quiet { opacity: 0; }
   .tile-pic-wrap { width: 15vw; height: 15vw; }
   .tile-title { font-size: clamp(18px, 3vw, 34px); }
   .tile-sung { font-size: 14px; }
+  .tile-tag { font-size: 15px; }
   .hole-stage { bottom: 18vh; }
   .hole-pick { padding-bottom: 16vh; }
   .pick-grid { grid-template-columns: repeat(4, 1fr); overflow-y: auto; }
