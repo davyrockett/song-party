@@ -301,12 +301,7 @@ input:focus, textarea:focus { outline: 3px solid var(--focus); outline-offset: 1
 .silly { background: linear-gradient(160deg, #7B4FD6 0%, #B04BC9 55%, #E8508A 100%); color: #FFFFFF; overflow: hidden; }
 .ml-pick { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 2vh 4vw 3vh; }
 .ml-head { margin: 0; font-weight: 600; font-size: 2vw; color: rgba(255,255,255,.8); }
-.ml-label { margin: .6vh 0 0; font-weight: 600; font-size: 2.6vw; color: #FFE45C; text-shadow: 0 .06em 0 rgba(0,0,0,.2); }
-.ml-q { margin: .4vh 0 2vh; font-size: 4.2vw; line-height: 1.25; text-align: center; text-shadow: 0 .06em 0 rgba(0,0,0,.25); }
-/* The gap where the picked word goes */
-.ml-gap { display: inline-block; width: 3.4em; height: .9em; vertical-align: -.1em; margin: 0 .1em;
-  border-radius: .2em; background: rgba(255,255,255,.22); border-bottom: .12em solid #FFE45C; }
-.silly .swap { background: none; box-shadow: none; color: #FFE45C; }
+.ml-q { margin: 1vh 0 2.4vh; font-size: 4.6vw; line-height: 1.2; text-align: center; text-shadow: 0 .06em 0 rgba(0,0,0,.25); }
 .silly .btn { color: #2B2340; background: #FFFFFF; border-color: rgba(255,255,255,.7); }
 .silly .btn.primary { background: #FFE45C; border-color: #FFE45C; }
 /* A picked word in the song's lyrics: always shown, with its picture */
@@ -527,7 +522,6 @@ body.tv .ctrl.quiet { opacity: 0; }
   .hole-banner { font-size: 18px; }
   .pick-q, .ml-q { font-size: 24px; }
   .ml-head { font-size: 15px; }
-  .ml-label { font-size: 18px; }
   .pick-grid { grid-template-columns: repeat(3, 1fr); }
   .party-title { font-size: 36px; } .party-sub { font-size: 20px; }
   #quiz { padding: 3vh 4vw; overflow-y: auto; justify-content: flex-start; }

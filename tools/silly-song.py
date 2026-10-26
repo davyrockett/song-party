@@ -1,11 +1,12 @@
 """Adds a silly-words (mad libs) song to Song Party, copying the words from Memory Lane's song list (never retyped).
 
-   python3 tools/silly-song.py "Ring of Fire" --verses 1,2 --swap thing,ring,fire --pic fire
+   python3 tools/silly-song.py "Ring of Fire" --verses 1,2 --swap burning:describe,thing,ring,fire:things --pic fire
 
 --verses picks which sections to keep (1 = the first verse, blank-line separated, counting choruses).
---swap marks the words the group gets to swap, as {fire} in the lyrics (whole words, any capitals).
-Adds the song to ../song-party-data/data.json; a song already there (same id) is left alone, so edits made
-in the app are never overwritten. Then commit and push song-party-data."""
+--swap marks the words the group gets to swap (whole words, any capitals), each with the kind of word that fits
+there after a colon (thing, things or describe; see SILLY_KINDS in madlib.js): fire:things → {fire|things}.
+Adds the song to ../song-party-data/data.json. A song already there (same id) is left alone, so edits made in
+the app are never overwritten, unless --replace is given. Then commit and push song-party-data."""
 import argparse, json, re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +24,7 @@ def main():
     ap.add_argument("--swap", required=True)
     ap.add_argument("--pic", default="notes")
     ap.add_argument("--cats", default="Silly Songs,Pick & Build")
+    ap.add_argument("--replace", action="store_true")
     a = ap.parse_args()
 
     ml = json.loads(MEMORY_LANE.read_text())["items"]
@@ -33,14 +35,15 @@ def main():
     if a.verses:
         blocks = [blocks[int(n) - 1] for n in a.verses.split(",")]
     lyrics = "\n\n".join(blocks)
-    for w in a.swap.split(","):
-        w = w.strip()
-        lyrics, n = re.subn(rf"\b({re.escape(w)})\b", r"{\1}", lyrics, flags=re.I)
-        print(f"{w}: marked {n} times")
+    for spec in a.swap.split(","):
+        w, _, kind = spec.strip().partition(":")
+        tail = "|" + kind if kind and kind != "thing" else ""
+        lyrics, n = re.subn(rf"\b({re.escape(w)})\b", lambda m: "{" + m.group(1) + tail + "}", lyrics, flags=re.I)
+        print(f"{w}: marked {n} times ({kind or 'thing'})")
 
     data = json.loads(DATA.read_text())
     sid = "song-" + re.sub(r"[^a-z0-9]+", "-", a.title.lower()).strip("-")
-    if sid in data["items"]:
+    if sid in data["items"] and not a.replace:
         raise SystemExit(f"{sid} is already in Song Party; left alone.")
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
     data["items"][sid] = {"type": "song", "title": src["title"], "pic": a.pic, "cats": a.cats.split(","),

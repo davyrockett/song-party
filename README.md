@@ -32,14 +32,17 @@ The group picks what goes in the hole.
 4. **Finish** (or **F**) any time: confetti, plus everything that went into the hole.
 
 ## Silly words (mad libs)
-Songs with silly words (first one: **Ring of Fire**) start with a picture board for each word the group gets to swap.
-1. The board shows the line with a gap: **Love is a burning ____**. Click what the group points to, press **Space** for a
+Songs with silly words (first one: **Ring of Fire**) start with the group picking words, Mad Libs style. They never see
+where the words go: that's the surprise when they sing.
+1. For each word the screen just says what kind to pick (**Pick a describing word!**, **Pick a thing!**, **Pick lots of
+   something!**), with a board of only the words that fit. Click what the group points to, press **Space** for a
    **Surprise!**, or **Real word** (**K**) to keep the song's own word. **Back** undoes the last pick.
-2. Every time that word comes up in the song, it's the group's pick, highlighted with its picture ("ring of pizza").
-3. After the song, the picture question asks what they picked ("Love is a burning …?"), and the confetti screen shows
-   all their silly words. **Sing it again** picks new words.
+2. Then the words come up, with every pick highlighted next to its picture ("a stinky unicorn of spaghetti").
+3. After the song, the picture question asks what they picked ("Love is a …?"), and the confetti screen shows all their
+   silly words. **Sing it again** picks new words.
 
-To make any song a silly-words song, put curly brackets around the words to swap in its lyrics: `ring of {fire}`.
+To make any song a silly-words song, put curly brackets around the words to swap in its lyrics, with the kind of word
+after a `|`: `{burning|describe}`, `{thing}` (a thing is the default), `ring of {fire|things}`.
 
 ## Changing songs
 Settings (⚙ on the song list) → **Edit songs**: title, picture, groups, Get ready! tips, picture questions and lyrics.
@@ -47,7 +50,8 @@ Settings (⚙ on the song list) → **Edit songs**: title, picture, groups, Get 
   `Who was sleeping? = lion, cow, duck`. They get mixed up on screen. For a different word, put the picture in brackets:
   `Which one says quack? = quack (duck), moo (cow), oink (pig)`. A song with no questions goes straight to the confetti.
 - Leave a blank line between verses; put `[Chorus]` on its own line at the top of a chorus.
-- Silly words: `{fire}` lets the group swap the word "fire" for a picture before singing; every `{fire}` gets the same pick.
+- Silly words: `{fire|things}` lets the group swap the word "fire" for one they pick before singing. After the `|`
+  is the kind of word that fits: `thing` (the default), `things` (lots of something) or `describe`. Every `{fire}` gets the same pick.
 - Magic words: `[frog](frog)` shows the word "frog" with the frog picture. The part in round brackets is a picture name;
   the Picture box suggests names as you type.
 - To save changes for every device, paste your GitHub access key in Settings (it needs song-party-data with Contents "Read and write").
