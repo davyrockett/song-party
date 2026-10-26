@@ -10,7 +10,7 @@ var PICS = {
   snail: '1f40c', bee: '1f41d', penguin: '1f427', horse: '1f434', sheep: '1f411', chicken: '1f414', chick: '1f424',
   lion: '1f981', elephant: '1f418', bear: '1f43b', rabbit: '1f430', mouse: '1f42d', butterfly: '1f98b',
   spider: '1f577', bird: '1f426', dinosaur: '1f996', unicorn: '1f984', fly: '1fab0', bug: '1f41b', ant: '1f41c', turkey: '1f983',
-  worm: '1fab1', skunk: '1f9a8',
+  worm: '1fab1', skunk: '1f9a8', bison: '1f9ac',
   // Food
   pizza: '1f355', banana: '1f34c', cake: '1f382', 'ice cream': '1f366', apple: '1f34e', hamburger: '1f354',
   donut: '1f369', cookie: '1f36a', strawberry: '1f353', carrot: '1f955', egg: '1f95a',
