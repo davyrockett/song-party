@@ -154,3 +154,6 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   David's iPad has 📺 TV on and is in this app: the TV page sets `sp.link-role` to `tv` and loads the app in a
   frame; `/tv/mirror.js` (loaded by suite.js) calls `linkStart('remote')` here once the page has loaded. This app's
   own link (`sp`) does the rest. Tapping "On TV" to stop also calls `linkStop()`.
+- **TV follows the song-list scroll (2026-10-30, David's request):** Memory Lane's v24 scroll following, copied as is
+  into remote.js (`listAnchor` / `listScrollTo`, only hand scrolls count; the list is rebuilt only when the group or
+  order changed). Tested with two tabs on a private link name.
