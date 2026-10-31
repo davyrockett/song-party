@@ -147,3 +147,8 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   reverted (app published as v6 = v4's code; songs restored to their pre-picture lyrics with fresh timestamps). The
   old work is in commit f2e8f9d (app) and f69177c (songs) if any of it is wanted again; ask David what broke first,
   and add things a little at a time.
+
+- **One TV address (2026-10-30):** www.davyrockett.com/tv (website repo `tv/`) opens this app as its TV screen when
+  David's iPad has 📺 TV on and is in this app: the TV page sets `sp.link-role` to `tv` and loads the app in a
+  frame; `/tv/mirror.js` (loaded by suite.js) calls `linkStart('remote')` here once the page has loaded. This app's
+  own link (`sp`) does the rest. Tapping "On TV" to stop also calls `linkStop()`.
