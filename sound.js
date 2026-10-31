@@ -1,6 +1,7 @@
 /* Sound effects, made live in the browser with simple synths (no recordings, no voices).
    Short and mostly un-pitched, so they don't clash with whatever key David is playing in.
-   Off in Settings, and silent on a remote (with the TV link, only the TV plays them).
+   Off in Settings. With the TV link they play on the remote (David's laptop / iPad), never on the TV: the TV
+   page (www.davyrockett.com/tv) shows this app in a frame nobody presses, and browsers keep that silent.
    Browsers only allow sound after a click or key press on the page, so the first press switches it on. */
 
 var Sfx = (function () {
@@ -8,7 +9,7 @@ var Sfx = (function () {
 
   function allowed() {
     if (lsGet(K.sound) === 'off') return false;
-    if (typeof link !== 'undefined' && link.role === 'remote') return false;
+    if (typeof link !== 'undefined' && link.role === 'tv') return false;
     return true;
   }
   function setup() {

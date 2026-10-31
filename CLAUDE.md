@@ -78,7 +78,9 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   Nothing flashes; `prefers-reduced-motion` stops the bobbing. Themes: Light / Dark / Yellow on blue / Auto, **C** cycles.
 - **Sound:** `sound.js`, synth only (no voices, ever): pop (magic word), drop (thing lands in the hole), tick/land (spin),
   wiggle, twinkle (card), cheer (party). Short and mostly unpitched so they don't clash with David's key.
-  Settings → Sound effects On/Off. With the TV link only the TV plays sounds (the remote is silent).
+  Settings → Sound effects On/Off. With the TV link only the **remote** plays sounds and the TV is silent (changed
+  2026-10-30: David got no sound from his MacBook remote; the one TV page shows the app in a frame that never gets a
+  press, so browsers block its sound anyway).
 - **Silly words / mad libs (2026-10-25, `madlib.js`):** David asked for a mad libs activity ("and maybe Jam Session"),
   starting with Ring of Fire (verse 1 + chorus, as he pasted). `{word|kind}` in lyrics marks a word to swap; every
   `{word}` in the song gets the same pick. Kinds (`SILLY_KINDS`, 24 pictures each): `thing` (default, fits after "a"),
