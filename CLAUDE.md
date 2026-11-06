@@ -159,3 +159,8 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
 - **TV follows the song-list scroll (2026-10-30, David's request):** Memory Lane's v24 scroll following, copied as is
   into remote.js (`listAnchor` / `listScrollTo`, only hand scrolls count; the list is rebuilt only when the group or
   order changed). Tested with two tabs on a private link name.
+- **TV presence fix (2026-11-06):** the TV screen's `on:`/`off:` (topic `/tv`) carry a per-connection name
+  (`link.cid` = `<me>.<n>`), and the TV re-says `on` when it sees any other `off` (a late last will from its own old
+  connection, or the TV screen inside www.davyrockett.com/tv closing when David switched apps). The remote ignores an
+  `off` from an unknown TV for 8 s (`link.offTimer`) while the TV screen starts up. It used to show "TV not connected"
+  while everything worked.
