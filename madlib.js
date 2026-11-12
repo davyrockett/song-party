@@ -10,24 +10,25 @@
    Jam Session's Silly Songs (silly.js) uses these same songs and a copy of SILLY_KINDS: change both together.
    Loaded after app.js and hole.js and uses their globals. Plain old JavaScript for TV browsers. */
 
-// Each kind of word: what the screen asks for, and the board ([word sung, picture name]; up to 24, 6 across).
+// Each kind of word: what the screen asks (asks: taken in turn, so a song with lots of words doesn't say the same
+// thing every time; see sillyAsk) and the board ([word sung, picture name]; up to 24, 6 across).
 var SILLY_KINDS = {
   // One thing (it fits after "a").
-  thing: { ask: 'Pick a thing!', items: [
+  thing: { asks: ['Pick a thing!', 'What’s the silliest thing here?', 'What should we sing about?', 'Pick your favorite!', 'What would make us laugh?', 'Point to something funny!'], items: [
     ['pizza', 'pizza'], ['banana', 'banana'], ['cake', 'cake'], ['donut', 'donut'], ['cookie', 'cookie'], ['hamburger', 'hamburger'],
     ['carrot', 'carrot'], ['pickle', 'pickle'], ['duck', 'duck'], ['frog', 'frog'], ['cat', 'cat'], ['dog', 'dog'],
     ['pig', 'pig'], ['cow', 'cow'], ['monkey', 'monkey'], ['chicken', 'chicken'], ['dinosaur', 'dinosaur'], ['unicorn', 'unicorn'],
     ['shoe', 'shoe'], ['hat', 'hat'], ['teddy bear', 'teddy'], ['balloon', 'balloon'], ['robot', 'robot'], ['guitar', 'guitar'],
   ] },
   // Lots of something (it fits after "of" or "lots of").
-  things: { ask: 'Pick lots of something!', items: [
+  things: { asks: ['Pick lots of something!', 'What do we want a whole bunch of?', 'Pick a big pile of something!', 'What should we have tons of?', 'What would be silly to have lots of?'], items: [
     ['spaghetti', 'spaghetti'], ['popcorn', 'popcorn'], ['cheese', 'cheese'], ['pickles', 'pickle'], ['french fries', 'fries'], ['pancakes', 'pancakes'],
     ['cupcakes', 'cupcake'], ['grapes', 'grapes'], ['bananas', 'banana'], ['cookies', 'cookie'], ['donuts', 'donut'], ['ice cream', 'ice cream'],
     ['pudding', 'pudding'], ['chocolate', 'chocolate'], ['candy', 'candy'], ['bubbles', 'bubbles'], ['socks', 'socks'], ['frogs', 'frog'],
     ['ducks', 'duck'], ['bugs', 'bug'], ['worms', 'worm'], ['kittens', 'cat'], ['puppies', 'dog'], ['flowers', 'flower'],
   ] },
   // A describing word (none start with a vowel, so "a" never needs to change).
-  describe: { ask: 'Pick a describing word!', items: [
+  describe: { asks: ['Pick a describing word!', 'What’s it like? Pick a describing word!', 'Pick a funny describing word!', 'Stinky? Sparkly? Pick a describing word!', 'Pick a silly way to be!'], items: [
     ['stinky', 'skunk'], ['sparkly', 'sparkles'], ['sticky', 'honey'], ['slimy', 'snail'], ['spooky', 'ghost'], ['sleepy', 'sleepy'],
     ['silly', 'silly'], ['happy', 'happy'], ['grumpy', 'angry'], ['freezing', 'freezing'], ['spicy', 'pepper'], ['wiggly', 'worm'],
     ['bouncy', 'basketball'], ['fluffy', 'sheep'], ['giant', 'elephant'], ['tiny', 'ant'], ['crunchy', 'carrot'], ['shiny', 'star'],
@@ -43,6 +44,12 @@ var ml = { song: null, blanks: [], kinds: [], picks: [], spinning: false, spinN:
 function parseSwap(raw) {
   var parts = String(raw).split('|'), word = parts[0].trim(), kind = (parts[1] || '').trim().toLowerCase();
   return { word: word, key: word.toLowerCase(), kind: SILLY_KINDS[kind] ? kind : 'thing' };
+}
+// The question for word i: the next of its kind's asks, and "Last one!" on the last word.
+function sillyAsk(kinds, i) {
+  var asks = (SILLY_KINDS[kinds[i]] || SILLY_KINDS.thing).asks, k = 0;
+  for (var j = 0; j < i; j++) if (kinds[j] === kinds[i]) k++;
+  return (kinds.length > 2 && i === kinds.length - 1 ? 'Last one! ' : '') + asks[k % asks.length];
 }
 function kindItems(kind) { return (SILLY_KINDS[kind] || SILLY_KINDS.thing).items; }
 function sillyItem(word) {
@@ -147,7 +154,7 @@ function renderMl() {
   if (!blank) return;
   $('ml-head').textContent = ml.song.title + '  ·  ' + (n > 1 ? 'Word ' + (i + 1) + ' of ' + n : 'Pick a word');
   // Only what kind of word to pick, never where it goes: that's the surprise when they sing.
-  $('ml-q').textContent = SILLY_KINDS[ml.kinds[i]].ask;
+  $('ml-q').textContent = sillyAsk(ml.kinds, i);
   var grid = $('ml-grid');
   grid.textContent = '';
   kindItems(ml.kinds[i]).forEach(function (it) {

@@ -100,6 +100,9 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   Tonight (Silly Words)" (copies of Song Party's own, so the regular ones stay; Jam Session drops the suffix).
   Every silly-words song shows "(Silly Words)" under its name on its tile and title card (David, 2026-10-25;
   `songName()` drops the suffix from the stored title so it isn't shown twice).
+  2026-11-12: David: most of each song wasn't silly (Raindrops had 4 words), so every silly song got more marked words
+  (6–10 picks, at least one in nearly every section). With that many picks "Pick a thing!" got repetitive, so each kind
+  has `asks` (questions taken in turn per kind, `sillyAsk`), and the last pick says "Last one!".
   `tools/silly-song.py` copies a song's words from Memory Lane's data and marks the swap words with kinds (never retype
   lyrics). Jam Session has it too (Silly Songs, `silly.js`, reading this repo's song list; same `SILLY_KINDS` copied
   there, so change both together; new pictures need copying to jam-session's `pics/` + `pics.js`).
