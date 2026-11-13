@@ -106,6 +106,12 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   `tools/silly-song.py` copies a song's words from Memory Lane's data and marks the swap words with kinds (never retype
   lyrics). Jam Session has it too (Silly Songs, `silly.js`, reading this repo's song list; same `SILLY_KINDS` copied
   there, so change both together; new pictures need copying to jam-session's `pics/` + `pics.js`).
+  2026-11-13: David: fewer picks for the group, and some different words should share one pick. `{bow=knot}` sings
+  "bow" but takes knot's pick (`parseSwap` key = the part after `=`; same in jam-session's `silly.js`). The same word
+  everywhere already shared one pick. `tools/silly-picker.html` (open at localhost:8776/tools/silly-picker.html; the
+  service worker serves index.html for every page, so unregister it in that tab first) shows every silly song: tap a
+  word to make it silly, tap again for kind / "Same pick as…" / plain; numbers are the picks. Choices stay in that
+  browser's localStorage (`sillyPicker.v1`: song id → new lyrics) for Claude to apply to song-party-data.
 - **Picture questions (2026-10-21):** David wanted something after each song like Memory Lane's questions, but
   interactive. He picked "picture question" from a list (also offered: copy-the-moves, guess-the-song, wake-up stretch
   before; freeze dance, sing-it-a-silly-way spin, calm-down breath after). Song field `quiz`: lines

@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silly Word Picker</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* A helper page for David: choose which words in each silly song get swapped for silly picks.
+   Reads the live song list, writes nothing to it. Choices are kept in this browser (localStorage)
+   and Claude applies them to song-party-data (which both Song Party and Jam Session read). */
+:root {
+  --bg: #FFF7E8; --panel: #FFFFFF; --ink: #2B2340; --soft: #6B6680; --line: #F0DEBE; --accent: #FF7A1A;
+  --thing: #FFD24D; --things: #7FD6A8; --describe: #C7A6FF; --mark-ink: #2B2340;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #15112B; --panel: #241E45; --ink: #FFFFFF; --soft: #B6B0CF; --line: #3B3466; --accent: #FF9433; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 19px/1.5 'Atkinson Hyperlegible', system-ui, sans-serif; }
+header { padding: 10px 16px 0; max-width: 760px; margin: 0 auto; }
+h1 { font: 700 24px 'Fredoka', sans-serif; margin: 0 0 4px; }
+.how { color: var(--soft); font-size: 16px; margin: 0 0 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 15px; }
+.chip { border-radius: 8px; padding: 1px 8px; color: var(--mark-ink); font-weight: 700; }
+.chip.thing, .w.thing { background: var(--thing); }
+.chip.things, .w.things { background: var(--things); }
+.chip.describe, .w.describe { background: var(--describe); }
+.bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 2px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px max(16px, calc((100% - 728px) / 2)); }
+select, button { font: inherit; font-size: 16px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--ink); padding: 6px 12px; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #2B2340; font-weight: 700; }
+#saved { color: var(--soft); font-size: 15px; }
+main { max-width: 760px; margin: 0 auto; padding: 8px 16px 120px; }
+section.song { background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 14px 18px; margin: 18px 0; scroll-margin-top: 70px; }
+.songhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.songhead h2 { font: 600 22px 'Fredoka', sans-serif; margin: 0; flex: 1 1 auto; }
+.count { color: var(--soft); font-size: 15px; }
+.changed { color: var(--accent); font-weight: 700; font-size: 15px; }
+.lyrics { margin-top: 10px; }
+.line { min-height: 1.5em; }
+.label { color: var(--soft); font-style: italic; font-size: 16px; }
+.w { cursor: pointer; border-radius: 6px; padding: 0 2px; -webkit-user-select: none; user-select: none; }
+.w:hover { outline: 2px dashed var(--soft); }
+.w.on { color: var(--mark-ink); font-weight: 700; padding: 1px 4px; }
+.w.on::after { content: attr(data-k); font-size: 12px; font-weight: 700; margin-left: 3px; vertical-align: super; opacity: .75; }
+.pop { position: absolute; z-index: 10; background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+.pop .t { font-weight: 700; margin-bottom: 2px; }
+.pop button { text-align: left; }
+.pop .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pop { max-width: min(360px, calc(100vw - 24px)); }
+.pop button.sel { outline: 3px solid var(--accent); }
+.reset { font-size: 14px; padding: 3px 10px; }
+#msg { padding: 30px 0; color: var(--soft); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Silly Word Picker</h1>
+  <p class="how">Tap a word to make it silly. Tap a silly word to change its kind, give it the <b>same pick</b> as another silly word, or make it plain again. The little number is the pick: words with the same number get the same silly word, so the group picks fewer times.</p>
+  <div class="legend">
+    <span class="chip thing">a thing</span>
+    <span class="chip things">lots of things</span>
+    <span class="chip describe">describing word</span>
+  </div>
+</header>
+<div class="bar">
+  <select id="jump" aria-label="Jump to song"><option value="">Jump to a song…</option></select>
+  <button class="primary" id="copy">Copy my choices</button>
+  <span id="saved"></span>
+</div>
+<main><div id="msg">Loading songs…</div></main>
+<script>
+var DATA_URL = 'https://www.davyrockett.com/song-party-data/data.json';
+var STORE = 'sillyPicker.v1';
+var KINDS = { thing: 'a thing', things: 'lots of things', describe: 'describing word' };
+var WORD = /\{([^}]+)\}|([A-Za-z]+(?:[’'](?!s\b)[A-Za-z]+)*)/g;
+var songs = [];          // { id, title, original, lines: [[token]] }
+var saved = load();
+
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } }
+function persist() {
+  var out = {};
+  songs.forEach(function (s) { var l = serialize(s); if (l !== s.original) out[s.id] = { title: s.title, lyrics: l }; });
+  try { localStorage.setItem(STORE, JSON.stringify(out)); } catch (e) {}
+  saved = out;
+  var n = Object.keys(out).length;
+  document.getElementById('saved').textContent = n ? 'Saved — ' + n + ' song' + (n > 1 ? 's' : '') + ' changed' : 'No changes yet';
+}
+
+function parse(text) {
+  return text.split('\n').map(function (line) {
+    if (/^\s*\[[^\]]*\]\s*$/.test(line)) return [{ label: line }];
+    var toks = [], last = 0, m;
+    WORD.lastIndex = 0;
+    while ((m = WORD.exec(line))) {
+      if (m.index > last) toks.push({ text: line.slice(last, m.index) });
+      if (m[1] != null) {
+        var parts = m[1].split('|'), ln = parts[0].split('=');
+        var k = (parts[1] || 'thing').trim().toLowerCase();
+        toks.push({ word: ln[0], link: ln[1] != null ? ln[1].trim() : null, on: true, kind: KINDS[k] ? k : 'thing' });
+      } else toks.push({ word: m[2], on: false, kind: null });
+      last = WORD.lastIndex;
+    }
+    if (last < line.length) toks.push({ text: line.slice(last) });
+    return toks;
+  });
+}
+function serialize(s) {
+  return s.lines.map(function (toks) {
+    return toks.map(function (t) {
+      if (t.label != null) return t.label;
+      if (t.text != null) return t.text;
+      if (!t.on) return t.word;
+      var ln = t.link && t.link.toLowerCase() !== t.word.toLowerCase() ? '=' + t.link : '';
+      return '{' + t.word + ln + (t.kind === 'thing' ? '' : '|' + t.kind) + '}';
+    }).join('');
+  }).join('\n');
+}
+function words(s) { var a = []; s.lines.forEach(function (l) { l.forEach(function (t) { if (t.word != null) a.push(t); }); }); return a; }
+function key(t) { return (t.link || t.word).toLowerCase(); }   // which pick it takes
+function same(a, b) { return a.word.toLowerCase() === b.word.toLowerCase(); }
+function guess(s, t) {
+  var w = words(s), i = w.indexOf(t), prev = i > 0 ? w[i - 1].word.toLowerCase() : '';
+  if (/^(of|some|many|lots|all|these|those)$/.test(prev)) return 'things';
+  if (/^(a|an|the|my|your|his|her|our|their|this|that|one)$/.test(prev)) return 'thing';
+  if (/(ing|ful|ous|ish|est|y)$/i.test(t.word) && !/(ey|ay|oy)$/i.test(t.word)) return 'describe';
+  if (/[^s]s$/i.test(t.word)) return 'things';
+  return 'thing';
+}
+// The picks in order: [{ key, kind, name }], name = the first silly word that takes it.
+function groups(s) {
+  var out = [], at = {};
+  words(s).forEach(function (t) {
+    if (!t.on) return;
+    var k = key(t);
+    if (at[k] == null) { at[k] = out.length; out.push({ key: k, kind: t.kind, name: t.word, words: [t.word.toLowerCase()] }); }
+    else if (out[at[k]].words.indexOf(t.word.toLowerCase()) < 0) out[at[k]].words.push(t.word.toLowerCase());
+  });
+  return out;
+}
+function picks(s) { return groups(s).length; }
+
+function render() {
+  var main = document.querySelector('main'), jump = document.getElementById('jump');
+  main.innerHTML = '';
+  songs.forEach(function (s, si) {
+    var sec = document.createElement('section'); sec.className = 'song'; sec.id = 'song-' + si;
+    var head = document.createElement('div'); head.className = 'songhead';
+    head.innerHTML = '<h2></h2><span class="count"></span><span class="changed"></span>';
+    head.querySelector('h2').textContent = s.title;
+    var reset = document.createElement('button'); reset.className = 'reset'; reset.textContent = 'Undo my changes';
+    reset.onclick = function () { s.lines = parse(s.original); refresh(s); };
+    head.appendChild(reset);
+    sec.appendChild(head);
+    var ly = document.createElement('div'); ly.className = 'lyrics'; sec.appendChild(ly);
+    s.el = { count: head.querySelector('.count'), changed: head.querySelector('.changed'), lyrics: ly, reset: reset };
+    main.appendChild(sec);
+    paint(s);
+    var o = document.createElement('option'); o.value = si; o.textContent = s.title; jump.appendChild(o);
+  });
+  persist();
+}
+function paint(s) {
+  var ly = s.el.lyrics; ly.innerHTML = '';
+  var gs = groups(s), num = {};
+  gs.forEach(function (g, i) { num[g.key] = i + 1; });
+  s.lines.forEach(function (toks) {
+    var d = document.createElement('div'); d.className = 'line';
+    toks.forEach(function (t) {
+      if (t.label != null) { var l = document.createElement('span'); l.className = 'label'; l.textContent = t.label; d.appendChild(l); return; }
+      if (t.text != null) { d.appendChild(document.createTextNode(t.text)); return; }
+      var sp = document.createElement('span');
+      sp.className = 'w' + (t.on ? ' on ' + t.kind : '');
+      if (t.on) sp.dataset.k = num[key(t)];
+      sp.textContent = t.word;
+      sp.onclick = function (e) { e.stopPropagation(); tap(s, t, sp); };
+      d.appendChild(sp);
+    });
+    ly.appendChild(d);
+  });
+  var n = gs.length;
+  s.el.count.textContent = n + ' pick' + (n === 1 ? '' : 's') + (gs.some(function (g) { return g.words.length > 1; })
+    ? ' — ' + gs.filter(function (g) { return g.words.length > 1; }).map(function (g) { return g.words.join(' + '); }).join(', ') : '');
+  var ch = serialize(s) !== s.original;
+  s.el.changed.textContent = ch ? 'changed' : '';
+  s.el.reset.style.visibility = ch ? 'visible' : 'hidden';
+}
+function refresh(s) { closePop(); paint(s); persist(); }
+
+function tap(s, t, el) {
+  if (!t.on) {
+    var twin = words(s).filter(function (w) { return w.on && same(w, t); })[0];
+    t.on = true; t.link = twin ? twin.link : null; t.kind = twin ? twin.kind : guess(s, t);
+    refresh(s); return;
+  }
+  openPop(s, t, el);
+}
+var pop = null;
+function closePop() { if (pop) { pop.remove(); pop = null; } }
+function openPop(s, t, el) {
+  closePop();
+  pop = document.createElement('div'); pop.className = 'pop';
+  pop.onclick = function (e) { e.stopPropagation(); };
+  var title = document.createElement('div'); title.className = 't'; title.textContent = '“' + t.word + '” is…'; pop.appendChild(title);
+  Object.keys(KINDS).forEach(function (k) {
+    var b = document.createElement('button'); b.textContent = KINDS[k]; b.className = 'chip ' + k + (t.kind === k ? ' sel' : '');
+    b.onclick = function () { var mk = key(t); words(s).forEach(function (w) { if (w.on && key(w) === mk) w.kind = k; }); refresh(s); };
+    pop.appendChild(b);
+  });
+  var twins = words(s).filter(function (w) { return same(w, t); });
+  var off = twins.filter(function (w) { return !w.on; }).length;
+  if (off) {
+    var all = document.createElement('button'); all.textContent = 'Make every “' + t.word + '” silly (' + twins.length + ')';
+    all.onclick = function () { twins.forEach(function (w) { w.on = true; w.kind = t.kind; w.link = t.link; }); refresh(s); };
+    pop.appendChild(all);
+  }
+  // Share a pick: this word's whole pick joins another pick (same silly word in both places).
+  var gs = groups(s), mine = key(t);
+  var others = gs.filter(function (g) { return g.key !== mine; });
+  if (others.length) {
+    var h = document.createElement('div'); h.className = 't'; h.textContent = 'Same pick as…'; pop.appendChild(h);
+    var row = document.createElement('div'); row.className = 'row'; pop.appendChild(row);
+    others.forEach(function (g) {
+      var b = document.createElement('button'); b.className = 'chip ' + g.kind;
+      b.textContent = (gs.indexOf(g) + 1) + ' ' + g.words.join(' + ');
+      b.onclick = function () {
+        words(s).forEach(function (w) { if (w.on && key(w) === mine) { w.link = g.key; w.kind = g.kind; } });
+        refresh(s);
+      };
+      row.appendChild(b);
+    });
+  }
+  var mates = words(s).filter(function (w) { return w.on && key(w) === mine && !same(w, t); });
+  if (mates.length) {
+    var own = document.createElement('button'); own.textContent = 'Give “' + t.word + '” its own pick';
+    own.onclick = function () {
+      // This word leads the pick: the others keep sharing among themselves. Otherwise this word just leaves.
+      if (mine === t.word.toLowerCase()) { var lead = mates[0].word; mates.forEach(function (w) { w.link = lead; }); }
+      else twins.forEach(function (w) { if (w.on) w.link = null; });
+      refresh(s);
+    };
+    pop.appendChild(own);
+  }
+  var plain = document.createElement('button'); plain.textContent = 'Not silly — sing the real word';
+  plain.onclick = function () { t.on = false; t.kind = null; t.link = null; refresh(s); };
+  pop.appendChild(plain);
+  if (twins.filter(function (w) { return w.on; }).length > 1) {
+    var none = document.createElement('button'); none.textContent = 'Make every “' + t.word + '” plain';
+    none.onclick = function () { twins.forEach(function (w) { w.on = false; w.kind = null; w.link = null; }); refresh(s); };
+    pop.appendChild(none);
+  }
+  document.body.appendChild(pop);
+  var r = el.getBoundingClientRect();
+  var left = Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 12);
+  pop.style.left = Math.max(window.scrollX + 12, left) + 'px';
+  pop.style.top = (window.scrollY + r.bottom + 6) + 'px';
+}
+document.addEventListener('click', closePop);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePop(); });
+document.getElementById('jump').onchange = function () {
+  if (this.value !== '') document.getElementById('song-' + this.value).scrollIntoView({ behavior: 'smooth' });
+  this.value = '';
+};
+document.getElementById('copy').onclick = function () {
+  var txt = JSON.stringify(saved, null, 2), b = this;
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () {
+    b.textContent = 'Copied!'; setTimeout(function () { b.textContent = 'Copy my choices'; }, 1500);
+  }, function () { prompt('Copy this:', txt); });
+};
+
+fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+  var items = d.items || {};
+  Object.keys(items).forEach(function (id) {
+    var it = items[id];
+    if (it.type !== 'song' || it.deleted || it.activity || !/\{[^}]+\}/.test(it.lyrics || '')) return;
+    var s = { id: id, title: it.title, original: it.lyrics };
+    s.lines = parse(saved[id] ? saved[id].lyrics : it.lyrics);
+    songs.push(s);
+  });
+  songs.sort(function (a, b) { return a.title.localeCompare(b.title); });
+  render();
+}).catch(function () { document.getElementById('msg').textContent = 'Couldn’t load the songs. Check the internet and reload.'; });
+</script>
+</body>
+</html>

@@ -2,7 +2,8 @@
 
    In the lyrics, {fire|things} marks a word the group gets to swap, and what kind of word fits there (a thing,
    lots of things, a describing word; see SILLY_KINDS; plain {fire} means a thing). Every {fire} in the song gets the
-   same pick, so "ring of fire" becomes "ring of spaghetti" all the way through. Like Mad Libs, the group never sees
+   same pick, so "ring of fire" becomes "ring of spaghetti" all the way through. {bow=knot} sings "bow" but takes knot's pick, so
+   two different words can share one pick. Like Mad Libs, the group never sees
    where the words go: for each marked word the screen just says "Pick a describing word!" with a board of only the
    words that fit. David clicks what the group chose, presses Space for a surprise pick, or K to keep the song's own
    word. The surprise comes when they sing: the words come up as usual, with the picks highlighted beside their
@@ -41,9 +42,12 @@ var SILLY_KINDS = {
 var ml = { song: null, blanks: [], kinds: [], picks: [], spinning: false, spinN: 0, spinTarget: '', timers: [] };
 
 // "fire|things" → { word: 'fire', key: 'fire', kind: 'things' }
+// "bow=knot" → { word: 'bow', key: 'knot', … }: sing "bow" but share knot's pick, so two different words in the
+// song take one pick (David, 2026-11-13: fewer things for the group to choose).
 function parseSwap(raw) {
-  var parts = String(raw).split('|'), word = parts[0].trim(), kind = (parts[1] || '').trim().toLowerCase();
-  return { word: word, key: word.toLowerCase(), kind: SILLY_KINDS[kind] ? kind : 'thing' };
+  var parts = String(raw).split('|'), kind = (parts[1] || '').trim().toLowerCase();
+  var link = parts[0].split('='), word = link[0].trim(), key = (link[1] || word).trim().toLowerCase();
+  return { word: word, key: key, kind: SILLY_KINDS[kind] ? kind : 'thing' };
 }
 // The question for word i: the next of its kind's asks, and "Last one!" on the last word.
 function sillyAsk(kinds, i) {
