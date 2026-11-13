@@ -108,10 +108,12 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   there, so change both together; new pictures need copying to jam-session's `pics/` + `pics.js`).
   2026-11-13: David: fewer picks for the group, and some different words should share one pick. `{bow=knot}` sings
   "bow" but takes knot's pick (`parseSwap` key = the part after `=`; same in jam-session's `silly.js`). The same word
-  everywhere already shared one pick. `tools/silly-picker.html` (open at localhost:8776/tools/silly-picker.html; the
-  service worker serves index.html for every page, so unregister it in that tab first) shows every silly song: tap a
-  word to make it silly, tap again for kind / "Same pick as…" / plain; numbers are the picks. Choices stay in that
-  browser's localStorage (`sillyPicker.v1`: song id → new lyrics) for Claude to apply to song-party-data.
+  everywhere already shared one pick. `tools/silly-picker.html` (Silly Word Picker) shows every silly song: tap a
+  word to make it silly, tap again for kind / "Same pick as…" / plain; numbers are the picks. David asked for a subtle
+  way in so he can do them as he has time: Settings → "Choose silly words" here, and a small "✎ Choose silly words" link
+  under Jam Session's Silly Songs list. Its Save writes straight to song-party-data with this app's access key
+  (`sp.sync-token`, same site so same localStorage); unsaved choices stay in `sillyPicker.v1`. sw.js lets
+  navigations under `/tools/` through (every other page is index.html).
 - **Picture questions (2026-10-21):** David wanted something after each song like Memory Lane's questions, but
   interactive. He picked "picture question" from a list (also offered: copy-the-moves, guess-the-song, wake-up stretch
   before; freeze dance, sing-it-a-silly-way spin, calm-down breath after). Song field `quiz`: lines

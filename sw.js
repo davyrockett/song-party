@@ -2,7 +2,7 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (tools/bump.sh).
 // That is how phones, iPads and TVs learn there's an update to download.
-const VERSION = 'v24';
+const VERSION = 'v25';
 const NAME = 'song-party';
 const CACHE = `${NAME}-${VERSION}`;
 const FONTS = 'song-party-fonts';
@@ -77,6 +77,8 @@ self.addEventListener('fetch', (event) => {
 
   if (url.origin !== location.origin || !url.pathname.startsWith(new URL('./', self.registration.scope).pathname)) return;
 
+  // Helper pages (tools/silly-picker.html) load as themselves; every other page is the app.
+  if (request.mode === 'navigate' && url.pathname.includes('/tools/')) return;
   if (request.mode === 'navigate') {
     event.respondWith(caches.open(CACHE).then((c) => c.match('./index.html')).then((cached) => cached || fetch(request)));
     return;

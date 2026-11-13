@@ -1227,6 +1227,8 @@ $('settings').addEventListener('click', function (e) {
   if (e.target === this && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)) this.close();
 });
 $('open-editor').addEventListener('click', openEditor);
+// Silly Word Picker: choose which words in each silly song get swapped (tools/silly-picker.html).
+$('open-silly').addEventListener('click', function () { location.href = 'tools/silly-picker.html'; });
 $('set-update').addEventListener('click', function () {
   var ver = $('ver-line'), ub = $('set-update'), reg = window.SW_REG;
   if (!reg || !navigator.onLine) { ver.textContent = 'Connect to the internet, then try again.'; return; }

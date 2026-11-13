@@ -7,8 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* A helper page for David: choose which words in each silly song get swapped for silly picks.
-   Reads the live song list, writes nothing to it. Choices are kept in this browser (localStorage)
-   and Claude applies them to song-party-data (which both Song Party and Jam Session read). */
+   Opened from Song Party's Settings and Jam Session's Silly Songs list. Unsaved choices are kept in this
+   browser (localStorage); Save writes them to song-party-data (which both apps read) with Song Party's
+   access key (same site, so same localStorage key sp.sync-token). */
 :root {
   --bg: #FFF7E8; --panel: #FFFFFF; --ink: #2B2340; --soft: #6B6680; --line: #F0DEBE; --accent: #FF7A1A;
   --thing: #FFD24D; --things: #7FD6A8; --describe: #C7A6FF; --mark-ink: #2B2340;
@@ -50,11 +51,15 @@ section.song { background: var(--panel); border: 2px solid var(--line); border-r
 .pop { max-width: min(360px, calc(100vw - 24px)); }
 .pop button.sel { outline: 3px solid var(--accent); }
 .reset { font-size: 14px; padding: 3px 10px; }
+.back { color: var(--soft); text-decoration: none; font-size: 16px; display: inline-block; margin-bottom: 4px; }
+#saved.problem { color: #C0392B; }
+button:disabled { opacity: .5; cursor: default; }
 #msg { padding: 30px 0; color: var(--soft); }
 </style>
 </head>
 <body>
 <header>
+  <a class="back" href="../" id="back">← Back</a>
   <h1>Silly Word Picker</h1>
   <p class="how">Tap a word to make it silly. Tap a silly word to change its kind, give it the <b>same pick</b> as another silly word, or make it plain again. The little number is the pick: words with the same number get the same silly word, so the group picks fewer times.</p>
   <div class="legend">
@@ -65,12 +70,14 @@ section.song { background: var(--panel); border: 2px solid var(--line); border-r
 </header>
 <div class="bar">
   <select id="jump" aria-label="Jump to song"><option value="">Jump to a song…</option></select>
-  <button class="primary" id="copy">Copy my choices</button>
+  <button class="primary" id="save" hidden>Save</button>
   <span id="saved"></span>
 </div>
 <main><div id="msg">Loading songs…</div></main>
 <script>
-var DATA_URL = 'https://www.davyrockett.com/song-party-data/data.json';
+var DATA_REPO = 'davyrockett/song-party-data', DATA_FILE = 'data.json';
+var PAGES_COPY = 'https://www.davyrockett.com/song-party-data/data.json';
+var TOKEN = (function () { try { return localStorage.getItem('sp.sync-token'); } catch (e) { return null; } })();
 var STORE = 'sillyPicker.v1';
 var KINDS = { thing: 'a thing', things: 'lots of things', describe: 'describing word' };
 var WORD = /\{([^}]+)\}|([A-Za-z]+(?:[’'](?!s\b)[A-Za-z]+)*)/g;
@@ -83,8 +90,70 @@ function persist() {
   songs.forEach(function (s) { var l = serialize(s); if (l !== s.original) out[s.id] = { title: s.title, lyrics: l }; });
   try { localStorage.setItem(STORE, JSON.stringify(out)); } catch (e) {}
   saved = out;
-  var n = Object.keys(out).length;
-  document.getElementById('saved').textContent = n ? 'Saved — ' + n + ' song' + (n > 1 ? 's' : '') + ' changed' : 'No changes yet';
+  status();
+}
+var saving = false;
+function status(msg, problem) {
+  var n = Object.keys(saved).length, el = document.getElementById('saved'), btn = document.getElementById('save');
+  btn.hidden = !n;
+  btn.disabled = saving || !TOKEN;
+  btn.textContent = saving ? 'Saving…' : 'Save ' + n + ' song' + (n === 1 ? '' : 's');
+  el.className = problem || (n && !TOKEN) ? 'problem' : '';
+  el.textContent = msg || (n && !TOKEN ? 'To save, add your access key in Song Party’s Settings. Your changes are kept here till then.'
+    : n ? 'Not saved yet' : 'All saved');
+}
+
+/* ---------- GitHub (same way Song Party saves) ---------- */
+function toBase64(text) {
+  var bytes = new TextEncoder().encode(text), bin = '';
+  for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function fromBase64(b64) {
+  var bin = atob(b64.replace(/\s/g, '')), bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function github(options) {
+  var headers = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', Authorization: 'Bearer ' + TOKEN };
+  if (options && options.body) headers['Content-Type'] = 'application/json';
+  return fetch('https://api.github.com/repos/' + DATA_REPO + '/contents/' + DATA_FILE, Object.assign({ cache: 'no-store', headers: headers }, options || {}));
+}
+// The newest song list: { data, sha }. With the key, straight from GitHub; without, the public copy.
+function download() {
+  if (TOKEN) return github().then(function (r) {
+    if (!r.ok) throw new Error(r.status === 401 ? 'The access key isn’t working.' : 'GitHub said ' + r.status + '.');
+    return r.json().then(function (b) { return { data: JSON.parse(fromBase64(b.content)), sha: b.sha }; });
+  });
+  return fetch('https://api.github.com/repos/' + DATA_REPO + '/contents/' + DATA_FILE, { cache: 'no-cache', headers: { Accept: 'application/vnd.github.raw+json' } })
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .catch(function () { return fetch(PAGES_COPY + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }); })
+    .then(function (d) { return { data: d, sha: null }; });
+}
+function save() {
+  var changed = songs.filter(function (s) { return serialize(s) !== s.original; });
+  if (!changed.length || !TOKEN || saving) return;
+  saving = true; status('Saving…');
+  function attempt(n) {
+    return download().then(function (r) {
+      var now = new Date().toISOString(), items = r.data.items;
+      changed.forEach(function (s) { if (items[s.id]) { items[s.id].lyrics = serialize(s); items[s.id].updatedAt = now; } });
+      var body = { message: 'Silly words: ' + changed.map(function (s) { return s.title; }).join(', '),
+        content: toBase64(JSON.stringify(r.data, null, 2) + '\n'), sha: r.sha };
+      return github({ method: 'PUT', body: JSON.stringify(body) }).then(function (res) {
+        if ((res.status === 409 || res.status === 422) && n < 3) return attempt(n + 1);
+        if (res.status === 403) throw new Error('Your access key can read but not save.');
+        if (!res.ok) throw new Error('GitHub said ' + res.status + ' when saving.');
+      });
+    });
+  }
+  attempt(0).then(function () {
+    changed.forEach(function (s) { s.original = serialize(s); paint(s); });
+    saving = false; persist();
+    status('✓ Saved. Song Party and Jam Session have the new words.');
+  }, function (e) {
+    saving = false; status((e && e.message) || 'Couldn’t save. Check the internet and try again.', true);
+  });
 }
 
 function parse(text) {
@@ -261,15 +330,12 @@ document.getElementById('jump').onchange = function () {
   if (this.value !== '') document.getElementById('song-' + this.value).scrollIntoView({ behavior: 'smooth' });
   this.value = '';
 };
-document.getElementById('copy').onclick = function () {
-  var txt = JSON.stringify(saved, null, 2), b = this;
-  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () {
-    b.textContent = 'Copied!'; setTimeout(function () { b.textContent = 'Copy my choices'; }, 1500);
-  }, function () { prompt('Copy this:', txt); });
-};
+document.getElementById('save').onclick = save;
+// Back to the app that opened this page.
+document.getElementById('back').onclick = function (e) { if (history.length > 1) { e.preventDefault(); history.back(); } };
 
-fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
-  var items = d.items || {};
+download().then(function (r) {
+  var items = r.data.items || {};
   Object.keys(items).forEach(function (id) {
     var it = items[id];
     if (it.type !== 'song' || it.deleted || it.activity || !/\{[^}]+\}/.test(it.lyrics || '')) return;
@@ -279,6 +345,10 @@ fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { 
   });
   songs.sort(function (a, b) { return a.title.localeCompare(b.title); });
   render();
+  if (location.hash) {   // #song-id from a song's own button
+    var at = songs.findIndex(function (s) { return '#' + s.id === location.hash; });
+    if (at >= 0) document.getElementById('song-' + at).scrollIntoView();
+  }
 }).catch(function () { document.getElementById('msg').textContent = 'Couldn’t load the songs. Check the internet and reload.'; });
 </script>
 </body>
