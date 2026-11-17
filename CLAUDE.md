@@ -181,3 +181,10 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   connection, or the TV screen inside www.davyrockett.com/tv closing when David switched apps). The remote ignores an
   `off` from an unknown TV for 8 s (`link.offTimer`) while the TV screen starts up. It used to show "TV not connected"
   while everything worked.
+- **Connection log (2026-11-17, v27):** David kept losing the TV link (that session: iPad on his phone's hotspot,
+  TV on the facility's Wi-Fi). remote.js now keeps notes on each linked device (`sp.link-log`, last 400): main relay
+  up / lost (with Paho's reason) / unreachable (repeats counted), backup relay, internet gone, screen locked, app
+  frozen (5 s timer gap), TV seen or gone, ntfy's daily limit (HTTP 429). The TV publishes its last 80 notes retained on
+  `<link>/tvlog`; the remote keeps them in `sp.link-log-tv`. Settings → TV link → Connection log shows both sides
+  (newest first, 12-hour summary) with Copy log (plain text David can paste to Claude) and Clear. Tested with two tabs
+  on a private link name; in that test HiveMQ timed out from the Mac and EMQX came back after 25 s.

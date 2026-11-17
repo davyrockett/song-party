@@ -545,3 +545,21 @@ body.tv .ctrl.quiet { opacity: 0; }
   .floaters img, .card-pic, .party-pic, .party-thing img, .bubbles span, .grid .tile:focus .tile-pic,
   .qcard img, .qcard.yes img, .qcard.no, .qcard.yes { animation: none; }
 }
+
+/* TV link: connection log (Settings) */
+.link-log { margin: .2em 0 .6em; }
+.link-log summary { cursor: pointer; font-weight: 600; padding: .3em 0; }
+.link-log-list { max-height: 45vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px;
+  padding: .3em .6em; font-size: .82em; line-height: 1.35; }
+.log-day { font-weight: 700; margin: .5em 0 .2em; color: var(--soft); }
+.log-row { display: flex; gap: .5em; padding: .12em 0; }
+.log-t { color: var(--soft); white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 6.2em; }
+.log-who { font-size: .8em; font-weight: 700; padding: .05em .45em; border-radius: 6px; background: var(--line);
+  align-self: flex-start; white-space: nowrap; }
+.log-who.tv { background: var(--magic); }
+.log-x { flex: 1; }
+.log-y { color: var(--soft); font-size: .85em; }
+.log-row.bad .log-x { color: #D93025; }
+.log-row.good .log-x { color: #2E7D32; }
+[data-theme="dark"] .log-row.bad .log-x, [data-theme="blue"] .log-row.bad .log-x { color: #FF8A80; }
+[data-theme="dark"] .log-row.good .log-x, [data-theme="blue"] .log-row.good .log-x { color: #81C995; }

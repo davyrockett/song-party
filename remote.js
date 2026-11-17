@@ -172,7 +172,9 @@ function sendState() {
     } catch (e) {}
   }
   if (link.ntfyOn) {
-    fetch('https://ntfy.sh/' + ntfyTopic(), { method: 'POST', body: body }).catch(function () {});
+    fetch('https://ntfy.sh/' + ntfyTopic(), { method: 'POST', body: body }).then(function (res) {
+      if (res.status === 429) logNote('limit', 'The backup relay’s daily limit ran out: taps aren’t getting through it');
+    }, function () { logNote('sendfail', 'Couldn’t send through the backup relay'); });
   }
 }
 // Hook into the app: whenever one of these runs, the screen changed, so tell the other devices.
@@ -194,6 +196,209 @@ function receive(text, retained) {
   applyState(msg.s);
 }
 
+/* ---------- Connection log (2026-11-17) ----------
+   David's TV link kept dropping (that session: iPad on his phone's hotspot, TV on the facility's Wi-Fi), so every
+   linked device keeps notes on its own connection: relay up / lost / unreachable, backup relay, internet gone,
+   screen locked, app paused, TV seen or gone. Kept on the device (last 400 notes). The TV sends its own notes over
+   the link (topic /tvlog, kept by the relay), so Settings → TV link → Connection log on the iPad shows both sides. */
+var LOG_K = { me: 'sp.link-log', tv: 'sp.link-log-tv' };
+var linkLog = {
+  list: logLoad(LOG_K.me, []), tv: logLoad(LOG_K.tv, { t: 0, log: [] }),
+  upAt: 0, downAt: 0, quiet: false, saveTimer: 0, sendTimer: 0, tick: Date.now(), visAt: 0, hiddenAt: 0,
+};
+var LOG_BAD = { lost: 1, fail: 1, 'tv-off': 1, 'net-off': 1, limit: 1, sendfail: 1, 'backup-lost': 1, paused: 1 };
+var LOG_GOOD = { up: 1, 'tv-on': 1, 'net-on': 1, backup: 1 };
+var LOG_REPEAT = { fail: 1, limit: 1, sendfail: 1, 'backup-lost': 1 };   // the same note again soon after just counts up
+function logLoad(k, empty) {
+  try { var v = JSON.parse(lsGet(k) || 'null'); return v && (Array.isArray(v) || Array.isArray(v.log)) ? v : empty; }
+  catch (e) { return empty; }
+}
+function logSave() {
+  clearTimeout(linkLog.saveTimer);
+  linkLog.saveTimer = setTimeout(function () { lsSet(LOG_K.me, JSON.stringify(linkLog.list)); }, 800);
+}
+function logNote(e, text, d, why) {
+  var now = Date.now(), last = linkLog.list[linkLog.list.length - 1];
+  if (last && LOG_REPEAT[e] && last.e === e && now - (last.l || last.t) < 10 * 60 * 1000) {
+    last.c = (last.c || 1) + 1; last.l = now;
+  } else {
+    var n = { t: now, r: link.role || 'off', e: e, x: text };
+    if (d) n.d = d;
+    if (why) n.y = why;
+    linkLog.list.push(n);
+    if (linkLog.list.length > 400) linkLog.list.splice(0, linkLog.list.length - 400);
+  }
+  logSave();
+  if (link.role === 'tv') logSend();
+  logRender();
+}
+function relayName(b) { return /hivemq/.test(b.host) ? 'HiveMQ' : 'EMQX'; }
+function whyText(why) { return why && why.errorCode ? String(why.errorMessage || why.errorCode) : ''; }
+function logUp(b) {
+  var now = Date.now(), d = linkLog.downAt ? now - linkLog.downAt : 0;
+  logNote('up', 'Connected to the main relay (' + relayName(b) + ')' + (d ? ' after ' + fmtDur(d) + ' without it' : ''), d);
+  linkLog.upAt = now; linkLog.downAt = 0;
+}
+function logLost(b, why) {
+  var now = Date.now();
+  logNote('lost', 'Lost the main relay (' + relayName(b) + ')' + (linkLog.upAt ? ' after ' + fmtDur(now - linkLog.upAt) + ' connected' : ''),
+    linkLog.upAt ? now - linkLog.upAt : 0, whyText(why));
+  linkLog.upAt = 0; linkLog.downAt = now;
+}
+function logFail(b, why) {
+  if (!linkLog.downAt) linkLog.downAt = Date.now();
+  logNote('fail', 'Couldn’t reach the main relay', 0, whyText(why));
+}
+function fmtDur(ms) {
+  var s = Math.round(ms / 1000);
+  if (s < 60) return s + ' s';
+  var m = Math.floor(s / 60);
+  if (m < 60) return m + ' min' + (m < 10 && s % 60 ? ' ' + (s % 60) + ' s' : '');
+  return Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+}
+function deviceName() {
+  var u = navigator.userAgent || '';
+  if (/iPad/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1)) return 'iPad';
+  if (/iPhone/.test(u)) return 'iPhone';
+  if (/Tizen|SMART-TV|SmartTV/i.test(u)) return 'Samsung TV';
+  if (/Web0S|webOS/i.test(u)) return 'LG TV';
+  if (/CrKey|GoogleTV|Android TV|AFT/i.test(u)) return 'Android / Fire TV';
+  if (/Android/.test(u)) return 'Android';
+  if (/Macintosh/.test(u)) return 'Mac';
+  if (/Windows/.test(u)) return 'Windows';
+  return 'browser';
+}
+// The TV shares its notes with the remote (kept by the relay, so the remote gets them whenever it connects).
+function logSend() {
+  clearTimeout(linkLog.sendTimer);
+  linkLog.sendTimer = setTimeout(function () {
+    if (link.role !== 'tv' || !link.mqttOn || !link.mqtt) return;
+    try {
+      var m = new Paho.Message(JSON.stringify({ k: 'sp1log', id: link.me, t: Date.now(), log: linkLog.list.slice(-80) }));
+      m.destinationName = linkBase() + '/tvlog'; m.retained = true;
+      link.mqtt.send(m);
+    } catch (e) {}
+  }, 2000);
+}
+function logFromTv(text) {
+  var d;
+  try { d = JSON.parse(text); } catch (e) { return; }
+  if (!d || d.k !== 'sp1log' || d.id === link.me || !Array.isArray(d.log)) return;
+  linkLog.tv = { t: d.t || Date.now(), log: d.log };
+  lsSet(LOG_K.tv, JSON.stringify(linkLog.tv));
+  logRender();
+}
+// Things around the connection: internet gone, screen locked, the app frozen for a while (timers stop when paused).
+window.addEventListener('offline', function () { if (linked()) logNote('net-off', 'This device says it has no internet'); });
+window.addEventListener('online', function () { if (linked()) logNote('net-on', 'Internet back on this device'); });
+document.addEventListener('visibilitychange', function () {
+  var now = Date.now();
+  linkLog.visAt = now;
+  if (!linked()) return;
+  if (document.visibilityState === 'hidden') { linkLog.hiddenAt = now; logNote('hidden', 'Screen locked, or another app in front'); }
+  else logNote('visible', 'Back on screen' + (linkLog.hiddenAt ? ' after ' + fmtDur(now - linkLog.hiddenAt) : ''));
+});
+window.addEventListener('pagehide', function () {
+  if (linked()) logNote('close', 'Page closed or reloaded');
+  lsSet(LOG_K.me, JSON.stringify(linkLog.list));
+});
+setInterval(function () {
+  var now = Date.now(), gap = now - linkLog.tick;
+  linkLog.tick = now;
+  if (linked() && gap > 20000 && !document.hidden && linkLog.visAt < now - gap) logNote('paused', 'The app was frozen for ' + fmtDur(gap), gap);
+}, 5000);
+
+/* The log in Settings: both devices' notes, newest first, with a short summary of the last 12 hours. */
+function logEntries() {
+  var all = [];
+  linkLog.list.forEach(function (n) { all.push({ n: n, who: n.r === 'tv' ? 'TV' : n.r === 'remote' ? 'Remote' : '' }); });
+  if (link.role !== 'tv') (linkLog.tv.log || []).forEach(function (n) { all.push({ n: n, who: 'TV' }); });
+  all.sort(function (a, b) { return a.n.t - b.n.t; });
+  return all;
+}
+function logEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function logTime(t) { return new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' }); }
+function logDay(t) { return new Date(t).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }); }
+function logLine(a) {
+  var n = a.n;
+  return n.x + (n.c > 1 ? ' (' + n.c + ' times, last at ' + logTime(n.l) + ')' : '');
+}
+function logSummary() {
+  var since = Date.now() - 12 * 60 * 60 * 1000;
+  function sum(list) {
+    var s = { lost: 0, longest: 0, net: 0, locked: 0, frozen: 0, limit: 0 };
+    (list || []).forEach(function (n) {
+      if (n.t < since) return;
+      if (n.e === 'lost') s.lost++;
+      if (n.e === 'up' && n.d > s.longest) s.longest = n.d;
+      if (n.e === 'net-off') s.net++;
+      if (n.e === 'hidden') s.locked++;
+      if (n.e === 'paused') s.frozen++;
+      if (n.e === 'limit') s.limit++;
+    });
+    return s;
+  }
+  function say(s, who) {
+    var bits = [];
+    bits.push(s.lost ? 'lost the main relay ' + s.lost + (s.lost === 1 ? ' time' : ' times')
+      + (s.longest ? ' (longest ' + fmtDur(s.longest) + ' without it)' : '') : 'never lost the main relay');
+    if (s.net) bits.push('had no internet ' + s.net + (s.net === 1 ? ' time' : ' times'));
+    if (s.locked) bits.push('screen locked or in the background ' + s.locked + (s.locked === 1 ? ' time' : ' times'));
+    if (s.frozen) bits.push('app frozen ' + s.frozen + (s.frozen === 1 ? ' time' : ' times'));
+    if (s.limit) bits.push('the backup relay ran out');
+    return who + ': ' + bits.join('; ') + '.';
+  }
+  var me = say(sum(linkLog.list), link.role === 'tv' ? 'This TV' : 'This device');
+  if (link.role === 'tv') return 'Last 12 hours. ' + me;
+  var tv = linkLog.tv.t ? say(sum(linkLog.tv.log), 'The TV') + ' (Its notes last came in at ' + logTime(linkLog.tv.t) + '.)'
+    : 'No notes from the TV yet (they come in once both are connected).';
+  return 'Last 12 hours. ' + me + ' ' + tv;
+}
+function logRender() {
+  var box = $('link-log-list');
+  if (!box || !$('link-log').open) return;
+  $('link-log-sum').textContent = logSummary();
+  var all = logEntries().reverse().slice(0, 250), html = '', day = '';
+  all.forEach(function (a) {
+    var d = logDay(a.n.t);
+    if (d !== day) { day = d; html += '<div class="log-day">' + logEsc(d) + '</div>'; }
+    html += '<div class="log-row' + (LOG_BAD[a.n.e] ? ' bad' : LOG_GOOD[a.n.e] ? ' good' : '') + '">'
+      + '<span class="log-t">' + logEsc(logTime(a.n.t)) + '</span>'
+      + (a.who ? '<span class="log-who' + (a.who === 'TV' ? ' tv' : '') + '">' + a.who + '</span>' : '')
+      + '<span class="log-x">' + logEsc(logLine(a)) + (a.n.y ? ' <span class="log-y">' + logEsc(a.n.y) + '</span>' : '') + '</span></div>';
+  });
+  box.innerHTML = html || '<p class="cap">Nothing yet. Notes start when the TV link is on.</p>';
+}
+function logText() {
+  var lines = [logSummary(), ''], day = '';
+  logEntries().forEach(function (a) {
+    var d = logDay(a.n.t);
+    if (d !== day) { day = d; lines.push('— ' + d + ' —'); }
+    lines.push(logTime(a.n.t) + '  ' + (a.who || '-') + '  ' + logLine(a) + (a.n.y ? '  [' + a.n.y + ']' : ''));
+  });
+  return lines.join('\n');
+}
+$('link-log').addEventListener('toggle', logRender);
+$('link-log-copy').addEventListener('click', function () {
+  var text = logText(), btn = this;
+  function done() { btn.textContent = 'Copied ✓'; setTimeout(function () { btn.textContent = 'Copy log'; }, 1800); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+  function fallback() {
+    var t = document.createElement('textarea');
+    t.value = text; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(t);
+  }
+});
+$('link-log-clear').addEventListener('click', function () {
+  if (!confirm('Clear the connection log on this device?')) return;
+  linkLog.list = []; linkLog.tv = { t: 0, log: [] };
+  lsSet(LOG_K.me, null); lsSet(LOG_K.tv, null);
+  logRender();
+});
+
 /* ---------- MQTT ---------- */
 function mqttConnect() {
   clearTimeout(link.retryTimer);
@@ -203,6 +408,7 @@ function mqttConnect() {
   var client = new Paho.Client(b.host, b.port, b.path, 'sp-' + link.me + '-' + Date.now().toString(36));
   link.mqtt = client; link.cid = cid;
   client.onMessageArrived = function (m) {
+    if (m.destinationName === linkBase() + '/tvlog') { logFromTv(m.payloadString); return; }
     if (m.destinationName === linkBase() + '/tv') {
       if (link.role !== 'tv') tvPresence(m.payloadString);
       else if (/^off:/.test(m.payloadString) && m.payloadString.slice(4) !== link.cid) tvSayOn();   // see tvSayOn
@@ -210,9 +416,10 @@ function mqttConnect() {
     }
     receive(m.payloadString, m.retained);
   };
-  client.onConnectionLost = function () {
+  client.onConnectionLost = function (why) {
     if (link.mqtt !== client) return;
     link.mqttOn = false; renderLink();
+    logLost(b, why);
     retry();
   };
   var opts = {
@@ -220,8 +427,10 @@ function mqttConnect() {
     onSuccess: function () {
       if (link.mqtt !== client) return;
       link.mqttOn = true; link.fails = 0;
+      logUp(b);
       client.subscribe(linkBase() + '/state');
       client.subscribe(linkBase() + '/tv');
+      if (link.role === 'remote') client.subscribe(linkBase() + '/tvlog');
       if (link.role === 'tv') {
         tvSayOn();   // now and every 20 seconds
         clearInterval(link.beat);
@@ -229,9 +438,10 @@ function mqttConnect() {
       }
       renderLink();
     },
-    onFailure: function () {
+    onFailure: function (why) {
       if (link.mqtt !== client) return;
       link.mqttOn = false; renderLink();
+      logFail(b, why);
       retry();
     },
   };
@@ -240,7 +450,7 @@ function mqttConnect() {
     var off = new Paho.Message('off:' + cid); off.destinationName = linkBase() + '/tv'; off.retained = true;
     opts.willMessage = off;
   }
-  try { client.connect(opts); } catch (e) { retry(); }
+  try { client.connect(opts); } catch (e) { logFail(b, { errorMessage: String(e && e.message || e) }); retry(); }
 }
 function retry() {
   link.broker++;                 // try the other relay next time
@@ -263,13 +473,14 @@ function tvSayOn() {
 function tvPresence(text) {
   var parts = String(text).split(':'), state = parts[0], id = parts[1] || '';
   clearTimeout(link.offTimer);
-  if (state === 'on') { link.tvId = id; link.tvOnline = true; }
-  else if (state === 'off' && id === link.tvId) link.tvOnline = false;
+  if (state === 'on') { if (link.tvOnline !== true) logNote('tv-on', 'The TV is connected'); link.tvId = id; link.tvOnline = true; }
+  else if (state === 'off' && id === link.tvId) { if (link.tvOnline !== false) logNote('tv-off', 'The relay says the TV dropped off'); link.tvOnline = false; }
   else if (state === 'off' && !link.tvId && link.tvOnline !== false) {
     // No TV seen yet: it may still be starting (www.davyrockett.com/tv opens this app's TV screen only once this
     // device opens the app), so give it a moment before saying it isn't connected.
     link.offTimer = setTimeout(function () {
       if (link.tvId || link.role !== 'remote') return;
+      logNote('tv-off', 'No TV on the main relay');
       link.tvOnline = false; ntfyStart(); renderLink();
     }, 8000);
     return;
@@ -297,8 +508,11 @@ function ntfyStart() {
   if (!linked() || link.ntfy || typeof EventSource === 'undefined') return;
   var es = new EventSource('https://ntfy.sh/' + ntfyTopic() + '/sse');
   link.ntfy = es;
-  es.onopen = function () { link.ntfyOn = true; renderLink(); };
-  es.onerror = function () { link.ntfyOn = false; renderLink(); };   // EventSource retries by itself
+  es.onopen = function () { if (!link.ntfyOn) logNote('backup', 'Backup relay (ntfy) connected'); link.ntfyOn = true; renderLink(); };
+  es.onerror = function () {   // EventSource retries by itself
+    if (link.ntfyOn && link.ntfy === es) logNote('backup-lost', 'Lost the backup relay (ntfy)');
+    link.ntfyOn = false; renderLink();
+  };
   es.onmessage = function (e) {
     var d;
     try { d = JSON.parse(e.data); } catch (x) { return; }
@@ -309,8 +523,11 @@ function ntfyStop() { if (link.ntfy) { link.ntfy.close(); link.ntfy = null; } li
 
 /* ---------- Turning it on and off ---------- */
 function linkStart(role) {
-  linkStop();
+  linkLog.quiet = true; linkStop(); linkLog.quiet = false;
   link.role = role;
+  linkLog.upAt = 0; linkLog.downAt = 0;
+  logNote('start', 'Link on: ' + (role === 'tv' ? 'TV screen' : 'remote') + ' · ' + deviceName()
+    + (window.top !== window ? ' · inside the one TV page' : '') + ' · ' + (window.APP_VERSION || ''));
   lsSet(LINK_K.role, role);
   link.tvOnline = null; link.tvId = ''; clearTimeout(link.offTimer);
   document.body.classList.toggle('tv', role === 'tv');
@@ -320,6 +537,7 @@ function linkStart(role) {
   setTimeout(function () { if (linked()) sendState(); }, role === 'tv' ? 2500 : 1500);
 }
 function linkStop() {
+  if (link.role && !linkLog.quiet) logNote('stop', 'Link turned off');
   mqttStop(); ntfyStop();
   link.role = '';
   lsSet(LINK_K.role, null);
