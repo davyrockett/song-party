@@ -37,6 +37,34 @@ var SILLY_KINDS = {
   ] },
 };
 
+// Action words (verbs), in each of their forms: [do, doing, did, does, picture]. Each form is its own kind of word,
+// so the board always fits the song: "cryin' all the time" = doing, "climbed up" = did, "the lion sleeps" = does,
+// "twinkle, twinkle" = do (David, 2026-11-16: "add verbs, to replace things like crying in Hound Dog").
+// A song word ending in in' (cryin') gets its pick the same way (dancin').
+var SILLY_VERBS = [
+  ['dance', 'dancing', 'danced', 'dances', 'dance'], ['sing', 'singing', 'sang', 'sings', 'microphone'],
+  ['sleep', 'sleeping', 'slept', 'sleeps', 'sleepy'], ['sneeze', 'sneezing', 'sneezed', 'sneezes', 'sneeze'],
+  ['laugh', 'laughing', 'laughed', 'laughs', 'laugh'], ['jump', 'jumping', 'jumped', 'jumps', 'kangaroo'],
+  ['swim', 'swimming', 'swam', 'swims', 'swim'], ['fly', 'flying', 'flew', 'flies', 'bird'],
+  ['hop', 'hopping', 'hopped', 'hops', 'rabbit'], ['wiggle', 'wiggling', 'wiggled', 'wiggles', 'worm'],
+  ['clap', 'clapping', 'clapped', 'claps', 'clap'], ['wave', 'waving', 'waved', 'waves', 'wave_hand'],
+  ['scream', 'screaming', 'screamed', 'screams', 'scream'], ['snore', 'snoring', 'snored', 'snores', 'snore'],
+  ['juggle', 'juggling', 'juggled', 'juggles', 'juggle'], ['yawn', 'yawning', 'yawned', 'yawns', 'yawn'],
+  ['hug', 'hugging', 'hugged', 'hugs', 'hug'], ['tickle', 'tickling', 'tickled', 'tickles', 'feather'],
+  ['quack', 'quacking', 'quacked', 'quacks', 'duck'], ['bark', 'barking', 'barked', 'barks', 'dog'],
+  ['roar', 'roaring', 'roared', 'roars', 'lion'], ['moo', 'mooing', 'mooed', 'moos', 'cow'],
+  ['slurp', 'slurping', 'slurped', 'slurps', 'slurp'], ['spin', 'spinning', 'spun', 'spins', 'spin'],
+];
+var VERB_ASKS = ['Pick something to do!', 'What should we do? Pick one!', 'Pick a silly action!', 'Pick something fun to do!', 'What would be funny to do?'];
+[['do', 0], ['doing', 1], ['did', 2], ['does', 3]].forEach(function (f) {
+  SILLY_KINDS[f[0]] = { asks: VERB_ASKS, items: SILLY_VERBS.map(function (v) { return [v[f[1]], v[4]]; }) };
+});
+// "cryin'" takes "dancing" as "dancin'".
+function dropG(songWord, pick) {
+  var m = /in([’'])$/.exec(songWord);
+  return m && /ing$/.test(pick) ? pick.slice(0, -1) + m[1] : pick;
+}
+
 // blanks: the marked words (lower case, in the order they first come up); kinds: what kind of word each one is;
 // picks: what the group chose for each, in the same order (the blank itself when they kept the song's own word).
 var ml = { song: null, blanks: [], kinds: [], picks: [], spinning: false, spinN: 0, spinTarget: '', timers: [] };
@@ -52,7 +80,7 @@ function parseSwap(raw) {
 // The question for word i: the next of its kind's asks, and "Last one!" on the last word.
 function sillyAsk(kinds, i) {
   var asks = (SILLY_KINDS[kinds[i]] || SILLY_KINDS.thing).asks, k = 0;
-  for (var j = 0; j < i; j++) if (kinds[j] === kinds[i]) k++;
+  for (var j = 0; j < i; j++) if ((SILLY_KINDS[kinds[j]] || SILLY_KINDS.thing).asks === asks) k++;   // the verb kinds share asks
   return (kinds.length > 2 && i === kinds.length - 1 ? 'Last one! ' : '') + asks[k % asks.length];
 }
 function kindItems(kind) { return (SILLY_KINDS[kind] || SILLY_KINDS.thing).items; }
@@ -81,9 +109,9 @@ function isMadlib(song) { return !!song && !song.activity && songBlanks(song).le
 function swapFor(raw, blanks, picks) {
   var w = parseSwap(raw), i = blanks.indexOf(w.key), p = i >= 0 ? picks[i] : null;
   if (!p || p === blanks[i]) return null;
-  var it = sillyItem(p);
+  var it = sillyItem(p), word = dropG(w.word, it.word);
   // Keep a capital letter at the start of a line.
-  return { word: /^[A-Z]/.test(w.word) ? it.word.charAt(0).toUpperCase() + it.word.slice(1) : it.word, pic: it.pic };
+  return { word: /^[A-Z]/.test(w.word) ? word.charAt(0).toUpperCase() + word.slice(1) : word, pic: it.pic };
 }
 // The picks for the song on screen (ly.song), or none.
 function livePicks() { return ml.song && ly.song && ml.song.id === ly.song.id ? ml.picks : []; }

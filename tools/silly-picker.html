@@ -12,7 +12,7 @@
    access key (same site, so same localStorage key sp.sync-token). */
 :root {
   --bg: #FFF7E8; --panel: #FFFFFF; --ink: #2B2340; --soft: #6B6680; --line: #F0DEBE; --accent: #FF7A1A;
-  --thing: #FFD24D; --things: #7FD6A8; --describe: #C7A6FF; --mark-ink: #2B2340;
+  --thing: #FFD24D; --things: #7FD6A8; --describe: #C7A6FF; --doing: #FF9E7A; --do: #FFB3D9; --did: #8FD3FF; --does: #C6E77A; --mark-ink: #2B2340;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #15112B; --panel: #241E45; --ink: #FFFFFF; --soft: #B6B0CF; --line: #3B3466; --accent: #FF9433; }
@@ -27,6 +27,10 @@ h1 { font: 700 24px 'Fredoka', sans-serif; margin: 0 0 4px; }
 .chip.thing, .w.thing { background: var(--thing); }
 .chip.things, .w.things { background: var(--things); }
 .chip.describe, .w.describe { background: var(--describe); }
+.chip.doing, .w.doing { background: var(--doing); }
+.chip.do, .w.do { background: var(--do); }
+.chip.did, .w.did { background: var(--did); }
+.chip.does, .w.does { background: var(--does); }
 .bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 2px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px max(16px, calc((100% - 728px) / 2)); }
 select, button { font: inherit; font-size: 16px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--ink); padding: 6px 12px; cursor: pointer; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #2B2340; font-weight: 700; }
@@ -66,6 +70,10 @@ button:disabled { opacity: .5; cursor: default; }
     <span class="chip thing">a thing</span>
     <span class="chip things">lots of things</span>
     <span class="chip describe">describing word</span>
+    <span class="chip doing">doing (crying)</span>
+    <span class="chip do">do (cry)</span>
+    <span class="chip did">did (cried)</span>
+    <span class="chip does">does (cries)</span>
   </div>
 </header>
 <div class="bar">
@@ -79,8 +87,10 @@ var DATA_REPO = 'davyrockett/song-party-data', DATA_FILE = 'data.json';
 var PAGES_COPY = 'https://www.davyrockett.com/song-party-data/data.json';
 var TOKEN = (function () { try { return localStorage.getItem('sp.sync-token'); } catch (e) { return null; } })();
 var STORE = 'sillyPicker.v1';
-var KINDS = { thing: 'a thing', things: 'lots of things', describe: 'describing word' };
-var WORD = /\{([^}]+)\}|([A-Za-z]+(?:[’'](?!s\b)[A-Za-z]+)*)/g;
+// The kinds of word (Song Party's SILLY_KINDS). The four action-word kinds are one verb board in different forms.
+var KINDS = { thing: 'a thing', things: 'lots of things', describe: 'describing word',
+  doing: 'doing (crying)', 'do': 'do (cry)', did: 'did (cried)', does: 'does (cries)' };
+var WORD = /\{([^}]+)\}|([A-Za-z]*in[’'](?![A-Za-z])|[A-Za-z]+(?:[’'](?!s\b)[A-Za-z]+)*)/g;   // cryin' keeps its ' (sung as dancin')
 var songs = [];          // { id, title, original, lines: [[token]] }
 var saved = load();
 
@@ -192,6 +202,8 @@ function guess(s, t) {
   var w = words(s), i = w.indexOf(t), prev = i > 0 ? w[i - 1].word.toLowerCase() : '';
   if (/^(of|some|many|lots|all|these|those)$/.test(prev)) return 'things';
   if (/^(a|an|the|my|your|his|her|our|their|this|that|one)$/.test(prev)) return 'thing';
+  if (/in[’']$/.test(t.word)) return 'doing';
+  if (/ing$/i.test(t.word) && /^(am|is|are|was|were|be|been|keep|keeps|kept|start|stop|go|goes|went|i'm|you're|they're|we're)$/.test(prev)) return 'doing';
   if (/(ing|ful|ous|ish|est|y)$/i.test(t.word) && !/(ey|ay|oy)$/i.test(t.word)) return 'describe';
   if (/[^s]s$/i.test(t.word)) return 'things';
   return 'thing';

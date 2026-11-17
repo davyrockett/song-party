@@ -32,6 +32,9 @@ var PICS = {
   // Body and actions
   clap: '1f44f', hooray: '1f64c', wave_hand: '1f44b', stomp: '1f9b6', foot: '1f9b6', leg: '1f9b5', hand: '270b',
   thumbs: '1f44d', hug: '1fac2', arm: '1f4aa', eyes: '1f440', ear: '1f442', nose: '1f443', mouth: '1f444', dance: '1f483',
+  // Silly action words (madlib.js SILLY_VERBS)
+  microphone: '1f3a4', sneeze: '1f927', laugh: '1f602', kangaroo: '1f998', swim: '1f3ca', scream: '1f631', snore: '1f4a4',
+  juggle: '1f939', yawn: '1f971', feather: '1fab6', slurp: '1f35c', spin: '1f300',
   // Feelings
   happy: '1f60a', smile: '1f603', sad: '1f622', angry: '1f620', sleepy: '1f634', surprised: '1f62e', silly: '1f61c', freezing: '1f976',
 };

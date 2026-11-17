@@ -114,6 +114,12 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   under Jam Session's Silly Songs list. Its Save writes straight to song-party-data with this app's access key
   (`sp.sync-token`, same site so same localStorage); unsaved choices stay in `sillyPicker.v1`. sw.js lets
   navigations under `/tools/` through (every other page is index.html).
+  2026-11-16: **action words (verbs)**, David: "add verbs, to replace things like crying in Hound Dog". One list of
+  24 verbs with pictures (`SILLY_VERBS`: [do, doing, did, does, picture]) makes four kinds, one per form, so the board
+  fits the spot: `doing` (cryin'), `do` (twinkle), `did` (climbed), `does` (sleeps). They share one set of `asks`
+  (`VERB_ASKS`; `sillyAsk` rotates by shared asks). A song word ending in in' gets its pick the same way (`dropG`:
+  "Cryin'" → "Barkin'"). The picker has the four kinds (labels show an example) and guesses `doing` for in' words.
+  Marked so far: Hound Dog cryin', Itsy Bitsy climbed, Lion sleeps, Twinkle twinkle. New pictures copied to Jam Session.
 - **Picture questions (2026-10-21):** David wanted something after each song like Memory Lane's questions, but
   interactive. He picked "picture question" from a list (also offered: copy-the-moves, guess-the-song, wake-up stretch
   before; freeze dance, sing-it-a-silly-way spin, calm-down breath after). Song field `quiz`: lines
