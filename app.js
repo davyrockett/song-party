@@ -76,6 +76,24 @@ function groups() {
   allSongs().forEach(function (song) { (song.cats || []).forEach(function (c) { if (list.indexOf(c) < 0) list.push(c); }); });
   return list;
 }
+// Holiday songs (2026-11-18): their own group, in the song list only in season (mid-November to early January)
+// unless Settings says always or never. Stored in the settings record so every device agrees; a linked device
+// also takes the other one's answer (linkHol) so the TV shows the same list. Same as Memory Lane.
+var HOLIDAY_GROUP = 'Holiday Songs';
+var linkHol = null;
+function holidayPref() { var s = get('settings'), v = s && s.holidays; return v === 'on' || v === 'off' ? v : 'auto'; }
+function inSeason() { var d = new Date(), m = d.getMonth(), day = d.getDate(); return (m === 10 && day >= 15) || m === 11 || (m === 0 && day <= 6); }
+function holidaysOn() { if (linkHol != null) return linkHol; var p = holidayPref(); return p === 'auto' ? inSeason() : p === 'on'; }
+function isHoliday(song) { return (song.cats || []).indexOf(HOLIDAY_GROUP) >= 0; }
+function shownSongs() { var on = holidaysOn(); return allSongs().filter(function (x) { return on || !isHoliday(x); }); }
+function shownGroups() { var on = holidaysOn(); return groups().filter(function (g) { return on || g !== HOLIDAY_GROUP; }); }
+function setHolidays(v) {
+  var s = get('settings') || { type: 'settings', categories: [] };
+  linkHol = null;
+  put('settings', Object.assign({}, s, { type: 'settings', holidays: v }));
+  markSettings();
+  if (current === 'list') renderList();
+}
 function saveLocal() { lsSet(K.data, JSON.stringify({ items: items })); }
 function put(id, rec) {
   var clean = Object.assign({}, rec);
@@ -171,7 +189,7 @@ function songColor(song) {
   if (group !== 'all' && group !== 'az' && (song.cats || []).indexOf(group) >= 0) return groupColor(group);
   return groupColor((song.cats || [])[0]);
 }
-function allGroupKeys() { return ['all', 'az'].concat(groups()); }
+function allGroupKeys() { return ['all', 'az'].concat(shownGroups()); }
 // The list is shown in a mixed-up order, reshuffled each time the song list opens, with today's songs
 // moved to the end. "A–Z" keeps alphabetical order. The order comes from a number (the seed), so a
 // linked TV can show exactly the same order.
@@ -185,7 +203,7 @@ function mixKey(id) {
   return h >>> 0;
 }
 function listSongs() {
-  var s = allSongs();
+  var s = shownSongs();
   if (group !== 'az') {
     var sung = sungToday();
     s = s.slice().sort(function (a, b) {
@@ -209,7 +227,7 @@ function renderChips() {
   }
   chip('all', 'All songs');
   chip('az', 'A–Z');
-  groups().forEach(function (g) { chip(g, g); });
+  shownGroups().forEach(function (g) { chip(g, g); });
 }
 function setGroup(g) {
   group = g; lsSet(K.group, g);
@@ -1199,7 +1217,14 @@ function markSettings() {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-' + s[0] + '-v') === val));
     });
   });
+  var hol = holidayPref();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-hol-v]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-hol-v') === hol)); });
+  var hn = $('hol-now');
+  if (hn) hn.textContent = hol === 'auto' ? (inSeason() ? 'They’re in the song list now (it’s the season).' : 'They’re hidden now (out of season).') : '';
 }
+Array.prototype.forEach.call(document.querySelectorAll('[data-hol-v]'), function (b) {
+  b.addEventListener('click', function () { setHolidays(b.getAttribute('data-hol-v')); });
+});
 SEGS.forEach(function (s) {
   Array.prototype.forEach.call(document.querySelectorAll('[data-' + s[0] + '-v]'), function (b) {
     b.addEventListener('click', function () {

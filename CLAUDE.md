@@ -188,3 +188,8 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   `<link>/tvlog`; the remote keeps them in `sp.link-log-tv`. Settings → TV link → Connection log shows both sides
   (newest first, 12-hour summary) with Copy log (plain text David can paste to Claude) and Clear. Tested with two tabs
   on a private link name; in that test HiveMQ timed out from the Mac and EMQX came back after 25 s.
+- **Holiday songs (v28, 2026-11-18):** the 11 Christmas songs from Memory Lane in a "Holiday Songs" group,
+  added by `tools/import-holidays.py` (words copied from memory-lane-data, which read them from David's charts;
+  pictures, "how" lines and picture questions written there). New pictures: santa, deer, snowflake, sled, scarf, gloves,
+  cocoa, list, maracas, envelope. Settings → Holiday songs: Auto (Nov 15 – Jan 6) / Always show / Hide, same code as
+  Memory Lane v42 (`holidays` in the shared settings record, `hol` in the list's link state, `linkHol`).

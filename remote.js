@@ -43,7 +43,7 @@ function linked() { return link.role === 'tv' || link.role === 'remote'; }
 function screenState() {
   var s = { screen: current, theme: document.documentElement.getAttribute('data-theme'),
             size: document.documentElement.getAttribute('data-size'), per: perScreen() };
-  if (current === 'list') { s.group = group; s.seed = shuffleSeed; listAnchor(s); }
+  if (current === 'list') { s.group = group; s.seed = shuffleSeed; s.hol = holidaysOn(); listAnchor(s); }
   if (current === 'card' && card.song) { s.song = card.song.id; s.ci = card.i; }
   if (current === 'lyrics' && ly.song) { s.song = ly.song.id; s.i = st.i; s.u = ly.song.updatedAt || ''; s.fx = st.fired.slice(); s.mp = mlChain(ly.song); }
   if (current === 'hole' && hs.song) { s.song = hs.song.id; s.hole = holeState(); }
@@ -63,7 +63,9 @@ function applyState(s) {
     if (s.screen === 'welcome' && current !== 'welcome') openWelcome();
     else if (s.screen === 'list') {
       // Only rebuild the tiles when the list itself changed (rebuilding jumps back to the top).
-      var fresh = current !== 'list' || (s.group && s.group !== group) || (s.seed != null && s.seed !== shuffleSeed);
+      var fresh = current !== 'list' || (s.group && s.group !== group) || (s.seed != null && s.seed !== shuffleSeed)
+        || (s.hol != null && s.hol !== holidaysOn());
+      if (s.hol != null) linkHol = s.hol;   // same holiday songs shown as the other device
       if (s.group && s.group !== group) { group = s.group; lsSet(K.group, group); }
       if (s.seed != null) shuffleSeed = s.seed;   // same mixed-up order as the other device
       if (current !== 'list') openList(); else if (fresh) renderList();

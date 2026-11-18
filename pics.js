@@ -26,6 +26,9 @@ var PICS = {
   // Nature and weather
   wave: '1f30a', shell: '1f41a', sun: '2600', moon: '1f319', star: '2b50', rainbow: '1f308', tree: '1f333', 'palm tree': '1f334',
   flower: '1f338', leaf: '1f33f', snowman: '26c4', pumpkin: '1f383', ghost: '1f47b', 'christmas tree': '1f384',
+  // Holidays
+  santa: '1f385', deer: '1f98c', snowflake: '2744', sled: '1f6f7', scarf: '1f9e3', gloves: '1f9e4', cocoa: '2615',
+  list: '1f4dc', maracas: '1fa87', envelope: '2709',
   // Party
   fire: '1f525',
   party: '1f389', confetti: '1f38a', notes: '1f3b6', heart: '2764', sparkles: '2728',
