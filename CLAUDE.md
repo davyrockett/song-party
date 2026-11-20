@@ -193,3 +193,4 @@ Jam Session-style interactive bits. Live: https://www.davyrockett.com/song-party
   pictures, "how" lines and picture questions written there). New pictures: santa, deer, snowflake, sled, scarf, gloves,
   cocoa, list, maracas, envelope. Settings → Holiday songs: Auto (Nov 15 – Jan 6) / Always show / Hide, same code as
   Memory Lane v42 (`holidays` in the shared settings record, `hol` in the list's link state, `linkHol`).
+- **Holiday songs only in their own group (2026-11-19, David):** never in All songs, A–Z, decades or any other group (Blue Christmas is in Elvis too, but shows only under the holiday group). `listSongs()` filters by `isHoliday(x) === (group === HOLIDAY_GROUP)`; the Auto/Always/Hide setting still decides whether the holiday group button shows.
